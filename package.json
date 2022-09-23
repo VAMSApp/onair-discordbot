@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "description": "A bot that integrates Your OnAir Company's or VA's details into Discord. Track flights, members, jobs, fleet, and cash flow information all from within discord.",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "test": "mocha",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:dev": "nodemon watch"
   },
   "author": {
     "name": "Mike DeVita",
@@ -14,7 +15,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "chalk": "^5.0.1",
+    "chalk": "^4.1.2",
     "discord.js": "^14.4.0",
     "dotenv": "^16.0.2",
     "easy-table": "^1.2.0",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "chai": "^4.3.6",
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "nodemon": "^2.0.20"
   }
 }
