@@ -4,20 +4,8 @@ const buildFlightsList = require('../messages/FlightsList')
 
 module.exports = {
 	data: new SlashCommandBuilder()
-	.setName('flights')
-	.setDescription('Replies with the OnAir VA\'s pending or inprogress flights')
-    .addIntegerOption(option =>
-		option.setName('page')
-			.setDescription('What page of the flights list to show')
-            .setRequired(false)
-    )
-    .addIntegerOption(option =>
-		option.setName('size')
-			.setDescription('How many results to show, maximum of 10')
-            .setMaxValue(10)
-            .setMinValue(1)
-            .setRequired(false)
-    ),
+	.setName('flights2')
+	.setDescription('Replies with the OnAir VA\'s pending/current flights'),
 	async execute(interaction) {
         let x = await OnAir.getFlights()
 
@@ -32,11 +20,8 @@ module.exports = {
         }
 
         if (x.length > 0) {
-            // if (x.length > 5) {
-            //     x = x.slice(0, 4)
-            // }
 
-            const flightList = buildFlightsList(x)
+            const flightList = buildFlightsList(x.slice(0,1))
             msg += `\n${flightList}`
         }
         
