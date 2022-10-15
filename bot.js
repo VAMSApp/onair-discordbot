@@ -24,6 +24,7 @@ class Bot {
             discord_guildId,
             discord_channelId,
             deployCommands,
+            connectNotice,
         } = cfg
 
         if (!discord_token) throw 'No Discord App token defined in cfg'
@@ -48,7 +49,10 @@ class Bot {
 
         this.Client.on('ready', async (client) => {
             Logger.info(`Logged into discord server as ${client.user.tag}`)
-            client.channels.fetch(this.ChannelId).then((channel) => channel.send(readyMsg))
+            
+            if (connectNotice === true) {
+                client.channels.fetch(this.ChannelId).then((channel) => channel.send(readyMsg))
+            }
         });
 
         

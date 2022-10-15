@@ -15,6 +15,7 @@ class App {
             discord_guildId,
             discord_channelId,
             deployCommands,
+            connectNotice,
         } = env
         
         if (!discord_token) throw 'No Discord App token defined in cfg'
@@ -28,6 +29,7 @@ class App {
             discord_guildId,
             discord_channelId,
             deployCommands,
+            connectNotice,
         })
     }
 }
