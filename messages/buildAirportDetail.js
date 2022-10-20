@@ -107,14 +107,16 @@ module.exports = function buildAirportDetail(x) {
     detail += `\n`
 
     detail += `**Arrivals**\n`
-    detail += '\`\`\`';
-    detail += ArrivalsJobsTable([])
+    detail += '\`\`\`fix\n';
+    detail += 'Not working yet\n'
+    // detail += ArrivalsJobsTable([])
     detail += '\`\`\`';
     detail += `\n`
 
     detail += `**Departals**\n`
-    detail += '\`\`\`';
-    detail += DeparturesJobsTable([])
+    detail += '\`\`\`fix\n';
+    detail += 'Not working yet\n'
+    // detail += DeparturesJobsTable([])
     detail += '\`\`\`';
     detail += `\n`
 
