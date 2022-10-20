@@ -15,12 +15,10 @@ module.exports = {
 	async execute(interaction) {
         const icao = interaction.options.getString('icao')
         const x = await OnAir.getAirport(icao);
-        let msg = 'There '
+        if (!x) return false
 
-        if (x) {
-            msg += `\n${buildAirportDetail(x)}`
-        }
+        const msg = buildAirportDetail(x)
 
-        return await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        return await interaction.reply(msg);
 	}
 }
