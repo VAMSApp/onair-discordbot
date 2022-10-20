@@ -1,20 +1,20 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildCompanyDetail = require('../messages/CompanyDetail')
+const buildVADetail = require('../messages/buildVADetail')
 
 module.exports = {
 	data: new SlashCommandBuilder()
 	.setName('detail')
-	.setDescription('OnAir company detail'),    
+	.setDescription('OnAir VA detail'),    
 	async execute(interaction) {
         let msg = ''
-        const x = await OnAir.getCompanyDetail();
-        if (!x) msg = 'No Company found'
+        const x = await OnAir.getVADetail();
+        if (!x) msg = 'No VA found'
 
         if (x) {
-            msg += `\n${buildCompanyDetail(x)}`
+            msg += `\n${buildVADetail(x)}`
         }
 
-        await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        return await interaction.reply(msg);
 	}
 }

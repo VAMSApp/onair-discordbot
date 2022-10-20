@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const { buildAirportDetail } = require('../lib/messageBuilder')
+const buildAirportDetail = require('../messages/buildAirportDetail')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -21,6 +21,6 @@ module.exports = {
             msg += `\n${buildAirportDetail(x)}`
         }
 
-        await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        return await interaction.reply(`\`\`\`\n${msg}\`\`\``);
 	}
 }

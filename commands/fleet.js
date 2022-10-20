@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildFleetList = require('../messages/FleetList')
+const buildFleetList = require('../messages/buildFleetList')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -19,23 +19,34 @@ module.exports = {
             .setRequired(false)
     ),
 	async execute(interaction) {
-        let oaFleet = await OnAir.getFleet()
+        const page = interaction.options.getInteger('page') || 1;
+        const size = interaction.options.getInteger('size') || 5;
+
+        let x = await OnAir.getFleet()
 
 		let msg = 'There '
 
-        if (oaFleet.length <= 0) {
+        if (x.length <= 0) {
             msg += 'are no aircraft in the VA fleet yet'
-        } else if (oaFleet.length == 1) {
-            msg += `is ${oaFleet.length} aircraft currently in the VA fleet`
+        } else if (x.length == 1) {
+            msg += `is ${x.length} aircraft currently in the VA fleet`
         } else {
-            msg += `are ${oaFleet.length} aircraft currently in the VA fleet`
+            msg += `are ${x.length} aircraft currently in the VA fleet`
         }
 
-        if (oaFleet.length > 0) {
-            const fleetList = buildFleetList(oaFleet)
-            msg += `\n${fleetList}`
+        msg += `\nShowing page ${page} of ${Math.ceil(x.length / size)}`
+
+        if (size) {
+            if (size && size.length > 5) {
+                size = 5
+            }
         }
 
-        await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        const slicedX = x.slice((page - 1) * size, page * size)
+
+        const fleetList = buildFleetList(slicedX)
+        msg += `\n${fleetList}`
+        
+        return await interaction.reply(`\`\`\`\n${msg}\`\`\``);
 	}
 }
