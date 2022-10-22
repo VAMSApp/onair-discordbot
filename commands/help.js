@@ -17,16 +17,17 @@ module.exports = {
         })
 
         if (commands.length <= 0) {
-            msg = 'No commands available'
-            await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
+            msg = '\`\`\`\nNo commands available\`\`\`\n'
+            await interaction.editReply({ content: msg, ephemeral: true });
         }
 
         msg += `**Available Commands**\n`
+        msg += `\`\`\`\n`
 
         commands.forEach(({ name, description }) => {
             msg += `/${name} - ${description}\n`
         })
-
-        await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
+        msg += `\`\`\`\n`
+        await interaction.editReply({ content: msg, ephemeral: true });
 	}
 }
