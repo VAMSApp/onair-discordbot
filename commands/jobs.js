@@ -19,34 +19,43 @@ module.exports = {
             .setRequired(false)
     ),
 	async execute(interaction) {
+        if (!interaction.isChatInputCommand()) return;
         const page = interaction.options.getInteger('page') || 1;
         const size = interaction.options.getInteger('size') || 5;
+        await interaction.deferReply({ ephemeral: true });
+
+        let msg = ''
+
+        
 
         let x = await OnAir.getVAJobs()
+        if (!x) msg = 'No fleet found'
 
-		let msg = `There `
+        if (x) {
+            msg = 'There '
 
-        if (x.length <= 0) {
-            msg += 'are no VA Jobs yet'
-        } else if (x.length == 1) {
-            msg += `is ${x.length} pending VA Job`
-        } else {
-            msg += `are ${x.length} pending VA Jobs`
-        }
-
-        msg += `\nShowing page ${page} of ${Math.ceil(x.length / size)}`
-
-        if (size) {
-            if (size && size.length > 5) {
-                size = 5
+            if (x.length <= 0) {
+                msg += 'are no VA Jobs yet'
+            } else if (x.length == 1) {
+                msg += `is ${x.length} pending VA Job`
+            } else {
+                msg += `are ${x.length} pending VA Jobs`
             }
-        }
 
-        const slicedX = x.slice((page - 1) * size, page * size)
+            msg += `\n\nShowing page ${page} of ${Math.ceil(x.length / size)}`
+
+            if (size) {
+                if (size && size.length > 5) {
+                    size = 5
+                }
+            }
+
+            const slicedX = x.slice((page - 1) * size, page * size)
+            
+            const jobsList = buildJobsList(slicedX)
+            msg += `\n${jobsList}`
+        }
         
-        const jobsList = buildJobsList(slicedX)
-        msg += `\n${jobsList}`
-        
-        return await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
 	}
 }

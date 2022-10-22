@@ -19,34 +19,42 @@ module.exports = {
             .setRequired(false)
     ),
 	async execute(interaction) {
+        if (!interaction.isChatInputCommand()) return;
         const page = interaction.options.getInteger('page') || 1;
         const size = interaction.options.getInteger('size') || 5;
 
-        let x = await OnAir.getFleet()
+        let msg = ''
 
-		let msg = 'There '
-
-        if (x.length <= 0) {
-            msg += 'are no aircraft in the VA fleet yet'
-        } else if (x.length == 1) {
-            msg += `is ${x.length} aircraft currently in the VA fleet`
-        } else {
-            msg += `are ${x.length} aircraft currently in the VA fleet`
-        }
-
-        msg += `\nShowing page ${page} of ${Math.ceil(x.length / size)}`
-
-        if (size) {
-            if (size && size.length > 5) {
-                size = 5
-            }
-        }
-
-        const slicedX = x.slice((page - 1) * size, page * size)
-
-        const fleetList = buildFleetList(slicedX)
-        msg += `\n${fleetList}`
+        await interaction.deferReply({ ephemeral: true });
         
-        return await interaction.reply(`\`\`\`\n${msg}\`\`\``);
+        let x = await OnAir.getFleet()
+        if (!x) msg = 'No fleet found'
+
+        if (x) {
+            msg = 'There '
+
+            if (x.length <= 0) {
+                msg += 'are no aircraft in the VA fleet yet'
+            } else if (x.length == 1) {
+                msg += `is ${x.length} aircraft currently in the VA fleet`
+            } else {
+                msg += `are ${x.length} aircraft currently in the VA fleet`
+            }
+
+            msg += `\nShowing page ${page} of ${Math.ceil(x.length / size)}`
+
+            if (size) {
+                if (size && size.length > 5) {
+                    size = 5
+                }
+            }
+            
+            const slicedX = x.slice((page - 1) * size, page * size)
+
+            const fleetList = buildFleetList(slicedX)
+            msg += `\n${fleetList}`
+        }
+
+        await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
 	}
 }

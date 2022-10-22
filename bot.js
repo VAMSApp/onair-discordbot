@@ -1,123 +1,119 @@
 const Logger = require('./lib/logger.js')
 const {
-    Client, REST, EmbedBuilder, SlashCommandBuilder, Routes, Collection, GatewayIntentBits
+    Client, REST, EmbedBuilder, SlashCommandBuilder, Collection, GatewayIntentBits
 } = require('discord.js')
-const { OnAirApi } = require('onair-api')
-const fs = require('fs')
+const { Routes } = require('discord-api-types/v9');
+const { readdirSync } = require('fs')
 const path = require('path')
-
-readyMsg = `Howdy OnAirTrackerBot here 👋\nOnAir information services are now accessible to this channel.\nType \`/help\` for more information!`
+const Config = require('./config');
 
 class Bot {
-    AppToken;
-    ClientId;
-    GuildId;
-    ChannelId;
+    AppToken = process.env.discord_token;
+    ClientId = process.env.discord_clientId;
+    GuildId = process.env.discord_guildId;
+    ChannelId = process.env.discord_channelId;
     Client = undefined;
+    Config = Config;
 
-    constructor(cfg) {
-        if (!cfg) throw 'No .cfg detected'
-
-        const {
-            discord_token,
-            discord_clientId,
-            discord_guildId,
-            discord_channelId,
-            deployCommands,
-            connectNotice,
-        } = cfg
-
-        if (!discord_token) throw 'No Discord App token defined in cfg'
-        if (!discord_clientId) throw 'No Discord ClientId defined in cfg'
-        if (!discord_guildId) throw 'No Discord guildId defined in cfg'
-        if (!discord_channelId) throw 'No Discord channelId defined in cfg'
+    constructor() {
+        if (!this.AppToken) throw 'No discord_token defined in .env'
+        if (!this.ClientId) throw 'No discord_clientId defined in .env'
+        if (!this.GuildId) throw 'No discord_guildId defined in .env'
+        if (!this.ChannelId) throw 'No discord_channelId defined in .env'
         
         Logger.info('starting up Discord Bot')
 
-        this.AppToken = discord_token
-        this.ClientId = discord_clientId
-        this.GuildId = discord_guildId
-        this.ChannelId = discord_channelId
 
         this.initializeClient()
+        this.loadCommands()
+        this.loadEvents()
+        this.deployCommands()
         
-        if (deployCommands === 'true') {
-            this.deployCommands()
-        }
-
         this.login()
 
         this.Client.on('ready', async (client) => {
             Logger.info(`Logged into discord server as ${client.user.tag}`)
             
-            if (connectNotice === true) {
+            if (this.Config.OnConnectNotice === true) {
+                const readyMsg = require('./messages/onReadyMessage')()
+                
                 client.channels.fetch(this.ChannelId).then((channel) => channel.send(readyMsg))
-            }
+            }   
         });
 
-        
-        this.Client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isChatInputCommand()) return;
-        
-            const command = interaction.client.commands.get(interaction.commandName);
-        
-            if (!command) return;
-        
-            try {
-                await command.execute(interaction);
-            } catch (error) {
-                console.error(error);
-                await interaction.reply('There was an error while executing this command!');
-            }
-        });
     }
 
     initializeClient () {
         if (!this.Client) this.Client = new Client({ intents: [GatewayIntentBits.Guilds] })
+    }
+
+    loadCommands () {
+        const commands = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith(".js"));
         this.Client.commands = new Collection();
 
-        const commandsPath = path.join(__dirname, 'commands');
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        for (const file of commands) {
+            const command = require(path.join(__dirname, 'commands', file));
+            const {
+                name,
+            } = command.data
 
-        for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command = require(filePath);
-            // Set a new item in the Collection
-            // With the key as the command name and the value as the exported module
-            this.Client.commands.set(command.data.name, command);
+            if (name) {
+                Logger.debug(`✅ Loading Command: ${name}`);
+                this.Client.commands.set(name, command);
+            } else {
+                continue;
+            }
         }
+        Logger.info(`✅ Loaded ${commands.length} Commands`)
+    }
+
+    loadEvents () {
+        const events = readdirSync(path.join(__dirname, 'events')).filter(file => file.endsWith('.js'));
+
+        for (const file of events) {
+            const event = require(path.join(__dirname, 'events', file));
+
+            Logger.debug(`✅ Loading Event: ${event.name}`);
+            this.Client.on(event.name, (...args) => event.execute(...args, this.Client));
+
+            // if (event.once) {
+            //     this.Client.once(event.name, (...args) => event.execute(...args, this.Client));
+            // } else {
+            // }
+        }
+        
+        Logger.info(`✅ Loaded ${events.length} Events`)
     }
 
     login() {
-        this.initializeClient()
-        Logger.info('Logging into the discord server')
+        Logger.debug('Logging into the discord server')
         this.Client.login(this.AppToken)
     }
 
-    deployCommands() {
-        const commands = []
-        const commandsPath = path.join(__dirname, 'commands');
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
+    async deployCommands() {
+        const commands = [];
+        const commandFiles = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith(".js"));
         for (const file of commandFiles) {
-            const filePath = path.join(commandsPath, file);
-            const command = require(filePath);
+            const command = require(`./commands/${file}`);
             commands.push(command.data.toJSON());
+            Logger.debug(`Will deploy command: ${command.data.name}`)
         }
-
-        /**
-        const commands = [
-            new SlashCommandBuilder().setName('members').setDescription('Replies with the members of the OnAir VA'),
-            new SlashCommandBuilder().setName('flights').setDescription('Replies with the currently active OnAir VA flights'),
-            new SlashCommandBuilder().setName('jobs').setDescription('Replies with the currently pending OnAir VA Jobs'),
-            new SlashCommandBuilder().setName('fleet').setDescription('Replies with the VA\'s fleet'),
-        ].map(command => command.toJSON());
-         */
+        
         const rest = new REST({ version: '10' }).setToken(this.AppToken);
+        
 
-        rest.put(Routes.applicationGuildCommands(this.ClientId, this.GuildId), { body: commands })
-            .then((data) => console.log(`Successfully registered ${data.length} application commands.`))
-            .catch(console.error);
+        try {
+            Logger.debug('Started reloading slash commands.');
+    
+            await rest.put(
+                Routes.applicationGuildCommands(this.ClientId, this.GuildId),
+                { body: commands },
+            );
+    
+            Logger.info('✅ Reloaded slash commands.');
+        } catch (error) {
+            Logger.error(error);
+        }
     }
 }
 

@@ -7,7 +7,11 @@ module.exports = {
 	.setName('detail')
 	.setDescription('OnAir VA detail'),    
 	async execute(interaction) {
+        if (!interaction.isChatInputCommand()) return;
         let msg = ''
+
+        await interaction.deferReply({ ephemeral: true });
+    
         const x = await OnAir.getVADetail();
         if (!x) msg = 'No VA found'
 
@@ -15,6 +19,6 @@ module.exports = {
             msg += `\n${buildVADetail(x)}`
         }
 
-        return await interaction.reply(msg);
+        await interaction.editReply({ content: msg, ephemeral: true });
 	}
 }

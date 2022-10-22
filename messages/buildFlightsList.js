@@ -16,7 +16,10 @@ module.exports = function buildFlightsList (x) {
         
         t.cell('#', i+1)
         t.cell('Aircraft', identifier)
+        t.cell('Company', f.Company.AirlineCode)
         t.cell('Status', status)
+        t.cell('Start Time', f.StartTime)
+        t.cell('End Time', f.EndTime)
         t.cell('Depart', departureAirport)
         t.cell('Intended Arrival', arrivalIntendedAirport)
         t.cell('Actual Arrival', arrivalActualAirport)

@@ -13,12 +13,20 @@ module.exports = {
     ),
     
 	async execute(interaction) {
+        if (!interaction.isChatInputCommand()) return;
         const icao = interaction.options.getString('icao')
+        let msg = ''
+
+        await interaction.deferReply({ ephemeral: true });
+
         const x = await OnAir.getAirport(icao);
-        if (!x) return false
 
-        const msg = buildAirportDetail(x)
+        if (!x) msg = 'No airport found'
 
-        return await interaction.reply(msg);
+        if (x) {
+            msg = `\n${buildAirportDetail(x)}`
+        }
+
+        await interaction.editReply({ content: msg, ephemeral: true });
 	}
 }
