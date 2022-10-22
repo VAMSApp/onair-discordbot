@@ -5,8 +5,8 @@ module.exports = function buildMemberList (x) {
 
     let t = new Table
     x.forEach(function (e, i) {
-        const companyName = `${Company.Name} (${Company.AirlineCode})`
-        const role  = e.VARole.Name
+        const companyName = `${e.Company.Name} (${e.Company.AirlineCode})`
+        const role  = `${e.VARole.Name} (${e.VARole.Permission})`
         const paxCargo = `${e.TotalPAXsTransported}/${e.TotalCargosTransportedLbs}`
         const rep = `${(e.ReputationImpact*100).toFixed(2)}%`
         const numFlights = e.NumberOfFlights
