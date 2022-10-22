@@ -16,6 +16,12 @@ By default the Bot should send a message in the configured channel when it comes
 ### Airport (/airport :icao)
 provides details of a given airport code. In the future will provide the list of planned Arrival and Departure jobs
 
+### Params
+| Name | Desc | Default |
+| --- | --- | --- |
+| page | Page # to show | 1 |
+| size | Results per page, max 5 | 5 |
+
 #### Response
 ```
 [KFFZ] Falcon Fld
@@ -43,6 +49,13 @@ Not working yet
 
 ### Members (/members)
 lists all the current VA members
+
+### Params
+| Name | Desc | Default |
+| --- | --- | --- |
+| page | Page # to show | 1 |
+| size | Results per page, max 5 | 5 |
+
 #### Response
 ```
 [Code] Company Name           Role        $ Earned      PAX Transported  Cargo Transported  # Flights (Flight Hrs)
@@ -58,6 +71,13 @@ lists all the current VA members
 
 ### Fleet (/fleet)
 lists all of the fleet for the given VA
+
+### Params
+| Name | Desc | Default |
+| --- | --- | --- |
+| page | Page # to show | 1 |
+| size | Results per page, max 5 | 5 |
+
 #### Response
 ```
 There are 6 aircraft currently in the fleet
@@ -73,6 +93,13 @@ There are 6 aircraft currently in the fleet
 
 ### Jobs (/jobs)
 lists all of the pending or in-progress jobs for the given VA
+
+### Params
+| Name | Desc | Default |
+| --- | --- | --- |
+| page | Page # to show | 1 |
+| size | Results per page, max 5 | 5 |
+
 #### Response
 ```
 There are 2 pending jobs
@@ -86,6 +113,7 @@ Goods transport     $1,110    1 leg
 
 ### Flights (/flights)
 lists all of the flights for the given VA
+
 ### Params
 | Name | Desc | Default |
 | --- | --- | --- |

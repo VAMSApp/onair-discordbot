@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildFleetList = require('../messages/buildFleetList')
+const FleetList = require('../messages/FleetList')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -51,7 +51,7 @@ module.exports = {
             
             const slicedX = x.slice((page - 1) * size, page * size)
 
-            const fleetList = buildFleetList(slicedX)
+            const fleetList = FleetList(slicedX)
             msg += `\n${fleetList}`
         }
 

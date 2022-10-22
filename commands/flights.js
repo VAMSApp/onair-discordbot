@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildFlightsList = require('../messages/buildFlightsList')
+const FlightsList = require('../messages/FlightsList')
 
 
 module.exports = {
@@ -91,7 +91,7 @@ module.exports = {
             msg += `\nSorting by ${sortBy} in ${sortOrder} order`
             msg += `\n\nShowing page ${page} of ${Math.ceil(x.length / size)}`
 
-            const flightsList = buildFlightsList(slicedX)
+            const flightsList = FlightsList(slicedX)
             msg += `\n${flightsList}`
         }
 

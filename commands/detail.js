@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildVADetail = require('../messages/buildVADetail')
+const VADetail = require('../messages/VADetail')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -16,7 +16,7 @@ module.exports = {
         if (!x) msg = 'No VA found'
 
         if (x) {
-            msg += `\n${buildVADetail(x)}`
+            msg += `\n${VADetail(x)}`
         }
 
         await interaction.editReply({ content: msg, ephemeral: true });

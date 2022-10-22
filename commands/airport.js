@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const OnAir = require('../lib/onair')
-const buildAirportDetail = require('../messages/buildAirportDetail')
+const AirportDetail = require('../messages/AirportDetail')
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -24,7 +24,7 @@ module.exports = {
         if (!x) msg = 'No airport found'
 
         if (x) {
-            msg = `\n${buildAirportDetail(x)}`
+            msg = `\n${AirportDetail(x)}`
         }
 
         await interaction.editReply({ content: msg, ephemeral: true });
