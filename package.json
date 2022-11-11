@@ -13,6 +13,16 @@
     "name": "Mike DeVita",
     "email": "mike@devita.co"
   },
+  "maintainers": [
+    {
+      "name": "Mike DeVita",
+      "email": "mike@devita.co"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vams-app/onair-discordbot"
+  },
   "license": "ISC",
   "_moduleAliases": {
     "@root": ".",
