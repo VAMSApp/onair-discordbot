@@ -1,6 +1,6 @@
 {
   "name": "onair-discordbot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A bot that integrates Your OnAir Company's or VA's details into Discord. Track flights, members, jobs, fleet, and cash flow information all from within discord.",
   "main": "index.js",
   "type": "commonjs",
