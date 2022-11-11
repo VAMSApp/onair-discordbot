@@ -15,36 +15,24 @@ const config = {
   discord_guildId: '### ADD YOUR DISCORD GUILD ID HERE ###',
   deployCommands: true,
   OnConnectNotice: false,
-  // Bot Admins, level 9 by default. Array of user ID strings.
-  "admins": [
-    '### USER ID ###'
-  ],
-
-  // Bot Support, level 8 by default. Array of user ID strings
-  "support": [
-    '### USER ID ###'
-  ],
-
-  /*
-  * Intents the bot needs.
-  * By default GuideBot needs Guilds, Guild Messages and Direct Messages to work.
-  * For join messages to work you need Guild Members, which is privileged and requires extra setup.
-  * For more info about intents see the README.
-  */
+  
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.DirectMessages,
-   ],
-  // Partials your bot may need should go here, CHANNEL is required for DM's
-  partials: ["CHANNEL"],
+  ],
 
-  "defaultSettings" : {
-    "prefix": "/",
-    "systemNotice": "true", // This gives a notice when a user tries to run a command that they do not have permission to use.
-    "commandReply": "true", // Toggle this if you want the bot to ping the command executor or not.
+  redis: {
+    host: 'localhost',
+    port: 6379,
+    password: '',
   },
+  onAir: {
+    companyId: '### ONAIR COMPANY ID ###',
+    vAId: '### ONAIR VA ID ###',
+    apiKey: '### ONAIR API KEY ###',
+  }
 };
 
 module.exports = config;
