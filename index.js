@@ -1,5 +1,5 @@
+require('module-alias/register')
 const Bot = require('./bot');
-require('dotenv').config()
 
 class App {
     Bot = undefined;
