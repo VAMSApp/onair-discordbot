@@ -7,6 +7,7 @@ const { readdirSync } = require('fs')
 const path = require('path')
 const Config = require('./config');
 const IORedis = require('ioredis');
+const EventService = require('./lib/EventService');
 
 class Bot {
     AppToken = Config.discord_token;
@@ -49,41 +50,22 @@ class Bot {
             }
             
             if (self.Config.VAEvents.enabled) {
-                self.VAEvents = new IORedis({
-                    host: self.Config.VAEvents.host,
-                    port: self.Config.VAEvents.port,
-                })
-
-                self.VAEvents.on('connect', () => {
-                    Logger.info('Connected to VAEvents Redis')
-                });
-
-                self.VAEvents.on('error', (err) => {
-                    Logger.error('VAEvents Redis Error: ' + err)
-                });
-
-                self.VAEvents.on('message', (channelName, message) => {
-                    const channelId = self.Config.VAEvents.channels[channelName];
-                    Logger.info(`Received message from ${channelName} (${channelId}): ${message}`)
-                    if (channelId) {
-                        self.Client.channels.fetch(channelId).then((channel) => channel.send(message))
-                    }
-                });
+                self.VAEvents = EventService.init(this.Config.redis);
                 
                 self.VAEvents.subscribe('discord', (err, count) => {
                     if (err) {
                         Logger.error(err)
                     } else {
-                        Logger.info(`Now Subscribed to ${count} channels`)
+                        Logger.info(`Now subscribed to ${count} channel${(count > 1) ? 's' : ''}`)
+
+                        // setInterval(async () => {
+                        //     self.VAEvents.publisher.publish('discord', 'ping')
+                        // }, 5000);
                     }
                 });
-                
-                self.VAEvents.subscribe('auth-signup', (err, count) => {
-                    if (err) {
-                        Logger.error(err)
-                    } else {
-                        Logger.info(`Now Subscribed to ${count} channels`)
-                    }
+
+                self.VAEvents.subscriber.on('message', async (channel, msg) => {
+                    Logger.info(`Received VA Event message on ${channel} channel: ${msg}`)
                 });
             }   
         });

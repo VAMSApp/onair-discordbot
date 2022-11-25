@@ -24,10 +24,11 @@ module.exports = {
 
         if (parseInt(amount) > 100) return interaction.reply({ content: 'You can only delete up to 100 messages at a time', ephemeral: true });
 
-        await interaction.channel.bulkDelete(parseInt(amount) + 1, true).catch(async (err) => {
+        await interaction.channel.bulkDelete(parseInt(amount) + 1, true)
+        .catch(async (err) => {
             console.error(err);
             await interaction.reply({ content: 'There was an error trying to prune messages in this channel!', ephemeral: true });
-        }
+        });
 
 
     }
