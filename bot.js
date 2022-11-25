@@ -50,24 +50,9 @@ class Bot {
             }
             
             if (self.Config.VAEvents.enabled) {
-                self.VAEvents = EventService.init(this.Config.redis);
-                
-                self.VAEvents.subscribe('discord', (err, count) => {
-                    if (err) {
-                        Logger.error(err)
-                    } else {
-                        Logger.info(`Now subscribed to ${count} channel${(count > 1) ? 's' : ''}`)
-
-                        // setInterval(async () => {
-                        //     self.VAEvents.publisher.publish('discord', 'ping')
-                        // }, 5000);
-                    }
-                });
-
-                self.VAEvents.subscriber.on('message', async (channel, msg) => {
-                    Logger.info(`Received VA Event message on ${channel} channel: ${msg}`)
-                });
-            }   
+                self.VAEvents = EventService.init(Config.redis);
+                self.subscribeToVAEvents();
+            }
         });
 
     }
@@ -113,68 +98,66 @@ class Bot {
         
         Logger.info(`✅ Loaded ${events.length} Events`)
     }
-
-    // loadVAEvents () {
-    //     const self = this;
-
-    //     this.VAEvents.connect()
-    //     .then(() => {
-    //         Logger.info('✅ Connected to VA Events Redis Service')
-
-    //         // self.VAEvents.subscribe('auth-signup', (msg, channelName) => {
-    //         //     Logger.info(`Received message ${msg} on channel ${channelName}`)
-    //         //     self.Client.channels.fetch(Config.discord_channelId).then((channel) => channel.send(msg))
-    //         // });
-            
-    //         // self.VAEvents.subscribe('discord', (msg, channelName) => {
-    //         //     Logger.info(`Received message ${msg} on channel ${channelName}`)
-    //         //     self.Client.channels.fetch(Config.discord_channelId).then((channel) => channel.send(msg))
-    //         // });
-    //     })
-    //     .catch((err) => {
-    //         Logger.error(err)
-    //     });
-    // }
-
-    loadVAEvents() {
+ 
+    connectToVAEventService() {
         const self = this;
-        self.Client.on('ready', (client) => {
-            self.VAEvents.connect()
-            .then(() => {
-                self.VAEventService.subscribe('discord', (msg, channelName) => {
-                    const channelId = self.Config.VAEvents[channelName];
-                    if (channelId) {
-                        Logger.info(`Received VA Event for channel '${channelName}' (${channelId})`)
-                        self.Client.channels.fetch(channelId).then((channel) => channel.send(msg)).catch((err) => {
-                            Logger.error(`Error sending VA Event to channel '${channelName}' (${channelId})`)
-                            Logger.error(err)
-                        });
-                    }
-                })
-            })
-        })
+
+        // self.VAEvents.subscribe('discord', (err, count) => {
+        //     if (err) return (`Error subscribing to VAEvents channel: ${err}`);
+        //     Logger.info(`Subscribed to 'discord' VAEvents`);
+
+        //     return count;
+        // });
+
+        // self.VAEvents.subscribe('auth-signup', (err, count) => {
+        //     if (err) return (`Error subscribing to VAEvents channel: ${err}`);
+        //     Logger.info(`Subscribed to 'discord' VAEvents`);
+
+        //     return count;
+        // });
+
+        self.VAEvents.subscriber.on('message', (channelName, message) => {
+            if (!channelName) return;
+            if (!message) return;
+
+            Logger.debug(`Received VA Event '${channelName}', msg: ${message}`);
+            self.Client.channels.fetch(self.getChannelId(channelName)).then((channel) => channel.send(message))
+            this.Client.on(event.name, (...args) => event.execute(...args, this.Client));
+
+
+        });
+        
     }
 
-    //     this.VAEventService.connect()
-            
+    subscribeToVAEvents() {
+        const self = this;
+        const events = readdirSync(path.join(__dirname, 'va-events')).filter(file => file.endsWith('.js'));
 
-    //     // const vaEvents = readdirSync(path.join(__dirname, 'vaEvents')).filter(file => file.endsWith('.js'));
-    //     // Logger.info(`✅ Loading ${vaEvents.length} VA Events`)
+        for (const file of events) {
+            const event = require(path.join(__dirname, 'va-events', file));
+            Logger.debug(`✅ Loading VA Event: ${event.name}`);
 
-    //     // for (const file of vaEvents) {
-    //     //     const event = require(path.join(__dirname, 'vaEvents', file));
-    //     //     const hasKey = Object.keys(Config.VAEvents).includes(event.name)
-            
-    //     //     if (hasKey) {
-    //     //         const channelId = Config.VAEvents[event.name]
+            self.VAEvents.subscribe(event.name, (err, count) => event.subscribe(event.name, err, count, self))
+            .then(function (count) {
+                self.VAEvents.subscriber.on('message', (channel, msg) => event.execute(channel, msg, self));
+            })
+            .catch(function (err) {
+                Logger.error(`Error subscribing to VAEvents channel: ${err}`);
+            });
+        }
+        
+        Logger.info(`✅ Loaded ${events.length} Events`)
 
-    //     //         this.Client.on('ready', function (...args) {
-    //     //             Logger.info(`✅ Loading VA Event: ${event.name}`);
-    //     //         });
-    //     //     }
-    //     // }
-    
-    // }
+    }
+
+    getChannelId(channelName) {
+        if (!channelName) return;
+        const channelId = this.Config.VAEvents.channels[channelName];
+
+        if (!channelId) return;
+
+        return channelId;
+    }
 
     login() {
         Logger.debug('Logging into the discord server')
