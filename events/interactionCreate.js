@@ -7,10 +7,16 @@ module.exports = {
             if (!command) return;
             try {
                 Logger.info(`Executing command /${interaction.commandName} for ${interaction.user.tag}`);
+                await interaction.deferReply({ ephemeral: true });
+                
                 await command.execute(interaction);
+                Logger.info(`Executed command /${interaction.commandName} for ${interaction.user.tag}`);
             } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                if (error) {
+                    console.error(`Error executing command /${interaction.commandName} for ${interaction.user.tag}`, error);
+
+                    // await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                }
             }
         }
     },

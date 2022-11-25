@@ -8,7 +8,6 @@ module.exports = {
 	.setDescription('Prunes the bot\'s messages'),
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
-        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.guild.members.me.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
            return await interaction.editReply({ content: 'Hmm, I don\'t have permissions to manage messages', ephemeral: true });

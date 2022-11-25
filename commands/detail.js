@@ -9,8 +9,6 @@ module.exports = {
 	async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         let msg = ''
-
-        await interaction.deferReply({ ephemeral: true });
     
         const x = await OnAir.getVADetail();
         if (!x) msg = 'No VA found'

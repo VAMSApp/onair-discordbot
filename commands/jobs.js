@@ -22,7 +22,6 @@ module.exports = {
         if (!interaction.isChatInputCommand()) return;
         const page = interaction.options.getInteger('page') || 1;
         const size = interaction.options.getInteger('size') || 5;
-        await interaction.deferReply({ ephemeral: true });
 
         let msg = ''
 

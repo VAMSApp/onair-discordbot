@@ -59,8 +59,6 @@ module.exports = {
         const showcompleted = interaction.options.getBoolean('showcompleted') || false;
 
         let msg = ''
-
-        await interaction.deferReply({ ephemeral: true });
         
         let x = await OnAir.getVAFlights({
             filter: {

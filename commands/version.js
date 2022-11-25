@@ -7,8 +7,6 @@ module.exports = {
     .setDescription('Replies with current Bot version'),
 	async execute(interaction) {
         let msg = BuildVersionMessage();
-        
-        await interaction.deferReply({ ephemeral: true });
 
         await interaction.editReply({ content: msg, ephemeral: true });
     }

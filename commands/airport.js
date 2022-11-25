@@ -17,8 +17,6 @@ module.exports = {
         const icao = interaction.options.getString('icao')
         let msg = ''
 
-        await interaction.deferReply({ ephemeral: true });
-
         const x = await OnAir.getAirport(icao);
 
         if (!x) msg = 'No airport found'

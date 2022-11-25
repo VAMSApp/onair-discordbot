@@ -6,7 +6,6 @@ module.exports = {
     .setDescription('Replies with a list of available commands'),
 	async execute(interaction) {
         let msg = ''
-        await interaction.deferReply({ ephemeral: true });
 
         const commands = interaction.client.commands.map(c => {
             const data = c.data.toJSON()

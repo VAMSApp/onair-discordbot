@@ -30,8 +30,6 @@ module.exports = {
         const icao = interaction.options.getString('icao');
         let msg = ''
 
-        await interaction.deferReply({ ephemeral: true });
-
         let x = await OnAir.getVAFbos();
 
         if (!x) msg = 'No FBO\'s found'
