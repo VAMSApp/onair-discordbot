@@ -1,0 +1,251 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AppConfig {
+  id        Int      @id @default(autoincrement())
+  appTitle  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id              Int              @id @default(autoincrement())
+  discordId       String           @unique
+  username        String
+  discriminator   String
+  email           String
+  locale          String
+  verified        Boolean
+  isAdmin         Boolean          @default(false)
+  isEnabled       Boolean          @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  approvalToken   String?
+  approvedById    Int?
+  approvedAt      DateTime?
+  approvedBy      Account?         @relation("ApprovedByAccount", fields: [approvedById], references: [id])
+  approvals       Account[]        @relation("ApprovedByAccount")
+  companies       Company[]
+  vaInvitations   VAInvitation[]
+  virtualAirlines VirtualAirline[]
+}
+
+model VirtualAirline {
+  id                                     Int            @id @default(autoincrement())
+  name                                   String
+  airlineCode                            String         @unique
+  guid                                   String         @unique
+  apiKey                                 String         @unique
+  initalOwnerEquity                      Int?
+  percentDividendsToDistribute           Float?
+  lastDividendsDistribution              DateTime?
+  imageName                              String?
+  forceAssignJobsToPilots                Boolean?
+  automaticallyAssignJobWhenTaken        Boolean?
+  automaticallyAssignJobWhenLoaded       Boolean?
+  restrictEmployeesUsage                 Boolean?
+  restrictLoadingVAJobsIntoNonVAAircraft Boolean?
+  restrictLoadingNonVAJobsIntoVAAircraft Boolean?
+  memberCount                            Int?
+  lastConnection                         DateTime?
+  lastReportDate                         DateTime?
+  reputation                             Float?
+  creationDate                           DateTime
+  difficultyLevel                        Int?
+  uTCOffsetinHours                       Float?
+  paused                                 Boolean?
+  level                                  Int?
+  levelXP                                Int?
+  transportEmployeeInstant               Boolean?
+  transportPlayerInstant                 Boolean?
+  forceTimeInSimulator                   Boolean?
+  useSmallAirports                       Boolean?
+  useOnlyVanillaAirports                 Boolean?
+  enableSkillTree                        Boolean?
+  checkrideLevel                         Int?
+  enableLandingPenalities                Boolean?
+  enableEmployeesFlightDutyAndSleep      Boolean?
+  aircraftRentLevel                      Int?
+  enableCargosAndChartersLoadingTime     Boolean?
+  inSurvival                             Boolean?
+  payBonusFactor                         Float?
+  enableSimFailures                      Boolean?
+  disableSeatsConfigCheck                Boolean?
+  realisticSimProcedures                 Boolean?
+  travelTokens                           Int?
+  ownerId                                Int?
+  onAirSyncedAt                          DateTime?
+  owner                                  Account?        @relation(fields: [ownerId], references: [id])
+  members                                Company[]
+  createdAt                              DateTime       @default(now())
+  updatedAt                              DateTime       @updatedAt
+  invitations                            VAInvitation[]
+  notifications                          Notification[]
+}
+
+model VAInvitation {
+  id         Int       @id @default(autoincrement())
+  vaId       Int
+  companyId  Int
+  accountId  Int
+  isPending  Boolean   @default(true)
+  token      String
+  emailId    Int
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  va      VirtualAirline @relation(fields: [vaId], references: [id])
+  company Company        @relation(fields: [companyId], references: [id])
+  account Account        @relation(fields: [accountId], references: [id])
+  email   Email          @relation(fields: [emailId], references: [id])
+}
+
+model Company {
+  id                                 Int       @id @default(autoincrement())
+  name                               String
+  guid                               String    @unique
+  airlineCode                        String    @unique
+  apiKey                             String?   @unique
+  lastConnection                     DateTime
+  lastReportDate                     DateTime
+  reputation                         Float
+  creationDate                       DateTime
+  difficultyLevel                    Int
+  uTCOffsetinHours                   Int
+  paused                             Boolean
+  pausedDate                         DateTime?
+  level                              Int
+  levelXP                            Int
+  transportEmployeeInstant           Boolean
+  transportPlayerInstant             Boolean
+  forceTimeInSimulator               Boolean
+  useSmallAirports                   Boolean
+  useOnlyVanillaAirports             Boolean
+  enableSkillTree                    Boolean
+  checkrideLevel                     Int
+  enableLandingPenalities            Boolean
+  enableEmployeesFlightDutyAndSleep  Boolean
+  aircraftRentLevel                  Int
+  enableCargosAndChartersLoadingTime Boolean
+  inSurvival                         Boolean
+  payBonusFactor                     Int
+  enableSimFailures                  Boolean
+  disableSeatsConfigCheck            Boolean
+  realisticSimProcedures             Boolean
+  travelTokens                       Int
+  virtualAirlineId                   Int?
+  currentBadgeId                     String?
+  currentBadgeUrl                    String?
+  currentBadgeName                   String?
+  lastWeeklyManagementsPaymentDate   DateTime?
+  onAirSyncedAt                      DateTime?
+
+  ownerId        Int?            @unique
+  owner          Account?        @relation(fields: [ownerId], references: [id])
+  virtualAirline VirtualAirline? @relation(fields: [virtualAirlineId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  invitations    VAInvitation[]
+  employees      Employee[]
+}
+
+model Menu {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique
+  name           String
+  order          Int      @default(autoincrement())
+  isAuthRequired Boolean  @default(false)
+  adminOnly      Boolean  @default(false)
+  isDisabled     Boolean  @default(false)
+  isRemovable    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id       Int     @id @default(autoincrement())
+  slug     String  @unique
+  name     String
+  href     String
+  label    String?
+  icon     String?
+  order    Int     @default(autoincrement())
+  parentId Int
+
+  isExternal     Boolean  @default(false)
+  isDisabled     Boolean  @default(false)
+  isAuthRequired Boolean  @default(false)
+  adminOnly      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  parent Menu @relation(fields: [parentId], references: [id])
+}
+
+model Email {
+  id            Int            @id @default(autoincrement())
+  type          String
+  from          String
+  to            String
+  subject       String?
+  body          String?
+  messageId     String?
+  sentAt        DateTime?
+  payload       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  vaInvitations VAInvitation[]
+}
+
+model Notification {
+  id             Int            @id @default(autoincrement())
+  guid           String         @unique
+  vaId           Int
+  companyId      Int?
+  vaGuid         String
+  companyGuid    String?
+  aircraftGuid   String?
+  flightGuid     String?
+  accountGuid    String?
+  employeeGuid   String?
+  employeeId     Int?
+  isRead         Boolean        @default(false)
+  isNotification Boolean        @default(false)
+  zuluEventTime  DateTime
+  categoryId     Int
+  actionId       Int
+  description    String
+  amount         Int            @default(0)
+  va             VirtualAirline @relation(fields: [vaId], references: [id])
+  employee       Employee?      @relation(fields: [employeeId], references: [id])
+}
+
+model Employee {
+  id                           Int            @id @default(autoincrement())
+  guid                         String         @unique
+  pseudo                       String
+  companyId                    Int
+  companyGuid                  String
+  flightHoursTotalBeforeHiring Float?
+  flightHoursInCompany         Float?
+  category                     Int
+  status                       Int
+  lastStatusChange             DateTime
+  isOnline                     Boolean        @default(false)
+  flightHoursGrandTotal        Float?
+  company                      Company        @relation(fields: [companyId], references: [id])
+  notifications                Notification[]
+}

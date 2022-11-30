@@ -22,6 +22,7 @@ module.exports = {
         const sortBy = interaction.options.getString('sortby') || 'Role';
         const sortOrder = interaction.options.getString('sortorder') || 'desc';
         let msg = ''
+        await interaction.deferReply({ ephemeral: true })
 
         const x = await OnAir.getVAMembers({
             sortBy: sortBy,

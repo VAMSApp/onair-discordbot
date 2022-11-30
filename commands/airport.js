@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, } = require('discord.js');
 const OnAir = require('../lib/onair')
 const AirportDetail = require('../messages/AirportDetail')
 
@@ -16,6 +16,7 @@ module.exports = {
         if (!interaction.isChatInputCommand()) return;
         const icao = interaction.options.getString('icao')
         let msg = ''
+        await interaction.deferReply({ ephemeral: true })
 
         const x = await OnAir.getAirport(icao);
 
@@ -25,6 +26,6 @@ module.exports = {
             msg = `\n${AirportDetail(x)}`
         }
 
-        await interaction.editReply({ content: msg, ephemeral: true });
+        interaction.editReply({ content: msg, ephemeral: true });
 	}
 }

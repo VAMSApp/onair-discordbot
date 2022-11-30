@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../va"
+		},
+		{
+			"path": "../discordbot"
 		}
 	],
 	"settings": {}

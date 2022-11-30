@@ -1,4 +1,6 @@
 const Logger = require('@lib/logger.js')
+const cron = require('node-cron')
+
 const {
     Client, REST, EmbedBuilder, SlashCommandBuilder, Collection, GatewayIntentBits
 } = require('discord.js')
@@ -8,14 +10,16 @@ const path = require('path')
 const Config = require('./config');
 const IORedis = require('ioredis');
 const EventService = require('./lib/EventService');
+const OnAirApi = require('./lib/onair');
 
 class Bot {
     AppToken = Config.discord_token;
     ClientId = Config.discord_clientId;
     GuildId = Config.discord_guildId;
     ChannelId = Config.discord_channelId;
-    Client = undefined;
     Config = Config;
+    OnAir = OnAirApi;
+    Client = undefined;
     VAEvents = undefined;
 
     constructor() {
@@ -23,42 +27,51 @@ class Bot {
         if (!this.ClientId) throw 'No discord_clientId defined in .env'
         if (!this.GuildId) throw 'No discord_guildId defined in .env'
 
+        this.initializeClient = this.initializeClient.bind(this);
+        this.loadCommands = this.loadCommands.bind(this);
+        this.login = this.login.bind(this);
+        this.deployCommands = this.deployCommands.bind(this);
+        this.subscribeToVAEvents = this.subscribeToVAEvents.bind(this);
+        this.getChannelId = this.getChannelId.bind(this);
+        this.refreshVANotifications = this.refreshVANotifications.bind(this);
+        
         Logger.info('starting up Discord Bot')
-
-        // const subscriber = createClient({
-        //     host: process.env.REDIS_HOST,
-        //     port: Number(process.env.REDIS_PORT),
-        //     password: process.env.REDIS_PASSWORD,
-        //     database: 1,
-        // });
 
         this.initializeClient();
         this.loadCommands()
-        this.loadEvents()
 
         this.deployCommands()
         this.login()
-        const self = this;
 
         this.Client.on('ready', async (client) => {
             Logger.info(`Logged into discord server as ${client.user.tag}`)
             
-            if (self.Config.OnConnectNotice === true) {
+            if (this.Config.OnConnectNotice === true) {
                 const readyMsg = require('./messages/onReadyMessage')()
                 
-                client.channels.fetch(self.ChannelId).then((channel) => channel.send(readyMsg))
+                client
+                .channels
+                .fetch(this.getChannelId('discord'))
+                .then((channel) => channel.send(readyMsg).then((msg) => (this.Config.OnConnectNoticeAutoDelete === true) ? setTimeout(() => msg.delete(), this.Config.onConnectNoticeAutoDeleteAfter || 10000) : null ));
+                
             }
             
-            if (self.Config.VAEvents.enabled) {
-                self.VAEvents = EventService.init(Config.redis);
-                self.subscribeToVAEvents();
+            if (this.Config.VAEvents.enabled) {
+                this.VAEvents = EventService;
+                this.subscribeToVAEvents();                
+            }
+
+            if (this.Config.poll.enabled === true) { 
+                this.scheduleCrons = this.scheduleCrons.bind(this);
+                Logger.info(`✅ Polling is enabled`);
+                this.scheduleCrons();
             }
         });
 
     }
 
     initializeClient() {
-        if (!this.Client) this.Client = new Client({ intents: [GatewayIntentBits.Guilds] })
+        if (!this.Client) this.Client = new Client({ intents: [GatewayIntentBits.Guilds, ] })
     }
 
     loadCommands () {
@@ -78,75 +91,54 @@ class Bot {
                 continue;
             }
         }
+
+        this.Client.on('interactionCreate', async interaction => {
+            if (!interaction.isChatInputCommand()) return;
+        
+            const command = this.Client.commands.get(interaction.commandName);
+        
+            if (!command) return;
+        
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(error);
+                await interaction.reply({ content: 'There was an error while executing this command! Please let Eric | ZSE | TPC76 know ASAP so that a fix can occur!'
+                        +'\n \nIf this is the booking or PIREP Command, please un-archive the channel as this is the reason you are getting this error', ephemeral: true });
+            }
+        })
+
         Logger.info(`✅ Loaded ${commands.length} Commands`)
-    }
-
-    loadEvents () {
-        const events = readdirSync(path.join(__dirname, 'events')).filter(file => file.endsWith('.js'));
-
-        for (const file of events) {
-            const event = require(path.join(__dirname, 'events', file));
-
-            Logger.debug(`✅ Loading Event: ${event.name}`);
-            this.Client.on(event.name, (...args) => event.execute(...args, this.Client));
-
-            // if (event.once) {
-            //     this.Client.once(event.name, (...args) => event.execute(...args, this.Client));
-            // } else {
-            // }
-        }
-        
-        Logger.info(`✅ Loaded ${events.length} Events`)
-    }
- 
-    connectToVAEventService() {
-        const self = this;
-
-        // self.VAEvents.subscribe('discord', (err, count) => {
-        //     if (err) return (`Error subscribing to VAEvents channel: ${err}`);
-        //     Logger.info(`Subscribed to 'discord' VAEvents`);
-
-        //     return count;
-        // });
-
-        // self.VAEvents.subscribe('auth-signup', (err, count) => {
-        //     if (err) return (`Error subscribing to VAEvents channel: ${err}`);
-        //     Logger.info(`Subscribed to 'discord' VAEvents`);
-
-        //     return count;
-        // });
-
-        self.VAEvents.subscriber.on('message', (channelName, message) => {
-            if (!channelName) return;
-            if (!message) return;
-
-            Logger.debug(`Received VA Event '${channelName}', msg: ${message}`);
-            self.Client.channels.fetch(self.getChannelId(channelName)).then((channel) => channel.send(message))
-            this.Client.on(event.name, (...args) => event.execute(...args, this.Client));
-
-
-        });
-        
     }
 
     subscribeToVAEvents() {
         const self = this;
-        const events = readdirSync(path.join(__dirname, 'va-events')).filter(file => file.endsWith('.js'));
+
+        const events = readdirSync(path.join(__dirname, 'va-events')).filter(file => {
+            const includes = Object.keys(self.Config.VAEvents.channels).includes(file.split('.')[0]);
+            return (includes) ? file : false;
+        });
 
         for (const file of events) {
             const event = require(path.join(__dirname, 'va-events', file));
-            Logger.debug(`✅ Loading VA Event: ${event.name}`);
-
+            Logger.debug(`Will subscribe to event: ${event.name}`);
             self.VAEvents.subscribe(event.name, (err, count) => event.subscribe(event.name, err, count, self))
             .then(function (count) {
-                self.VAEvents.subscriber.on('message', (channel, msg) => event.execute(channel, msg, self));
+                self.VAEvents.Subscriber.on('message', (channel, msg) => {
+                    try {
+                        msg = JSON.parse(msg);
+                    } catch (e) {
+                    }
+
+                    event.execute(channel, msg, self);
+                });
             })
             .catch(function (err) {
                 Logger.error(`Error subscribing to VAEvents channel: ${err}`);
             });
         }
         
-        Logger.info(`✅ Loaded ${events.length} Events`)
+        Logger.info(`✅ Loaded ${events.length} VA Events`)
 
     }
 
@@ -162,6 +154,42 @@ class Bot {
     login() {
         Logger.debug('Logging into the discord server')
         this.Client.login(this.AppToken)
+    }
+
+    scheduleCrons() {
+        const self = this;
+
+        if (this.Config.poll.VADetails === true) {
+            Logger.info(`✅ Polling for VA Details is enabled, will poll every 5 minutes`);
+            // run va refresh every 5 minutes
+            cron.schedule('*/5 * * * *', self.refreshVADetails);
+        }
+
+        if (this.Config.poll.VANotifications == true) {
+            setTimeout(() => {
+                self.refreshVANotifications();
+            }, 3000);
+            Logger.info(`✅ Polling for VA Notifications is enabled, will poll every minute`);
+            // run notifications check every minute
+            cron.schedule('* * * * *', self.refreshVANotifications);
+        }
+    }
+
+    async refreshVADetails() {
+        Logger.debug(`Refreshing VA Details`);
+        await this.OnAir.refreshVADetails();
+    }
+
+    async refreshVANotifications() {
+        Logger.debug(`Polling for VA Notifications`);
+        await this.OnAir.refreshVANotifications();
+        
+        // if (notifications.length > 0) {
+        //     const channel = await this.Client.channels.fetch(this.getChannelId('onair-notifications'));
+        //     const msg = require('./messages/Notification')(notifications)
+
+        //     channel.send(msg);
+        // }
     }
 
     async deployCommands() {

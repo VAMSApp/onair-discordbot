@@ -24,8 +24,7 @@ module.exports = {
         const size = interaction.options.getInteger('size') || 5;
 
         let msg = ''
-
-        
+        await interaction.deferReply({ ephemeral: true })        
 
         let x = await OnAir.getVAJobs()
         if (!x) msg = 'No fleet found'
@@ -41,7 +40,7 @@ module.exports = {
                 msg += `are ${x.length} pending VA Jobs`
             }
 
-            msg += `\n\nShowing page ${page} of ${Math.ceil(x.length / size)}`
+            msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`
 
             if (size) {
                 if (size && size.length > 5) {

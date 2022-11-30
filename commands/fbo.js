@@ -29,6 +29,7 @@ module.exports = {
         const size = interaction.options.getInteger('size') || 5;
         const icao = interaction.options.getString('icao');
         let msg = ''
+        await interaction.deferReply({ ephemeral: true })
 
         let x = await OnAir.getVAFbos();
 

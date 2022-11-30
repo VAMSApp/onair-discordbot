@@ -59,6 +59,7 @@ module.exports = {
         const showcompleted = interaction.options.getBoolean('showcompleted') || false;
 
         let msg = ''
+        await interaction.deferReply({ ephemeral: true })
         
         let x = await OnAir.getVAFlights({
             filter: {
@@ -87,7 +88,7 @@ module.exports = {
             msg = `There ${(x.length > 1 ) ? 'are' : 'is'} currently ${x.length} ${(!showcompleted) ? 'Active' : ''} flight${(x.length > 1 ) ? 's' : ''} in the VA flight Log`
 
             msg += `\nSorting by ${sortBy} in ${sortOrder} order`
-            msg += `\n\nShowing page ${page} of ${Math.ceil(x.length / size)}`
+            msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`
 
             const flightsList = FlightsList(slicedX)
             msg += `\n${flightsList}`

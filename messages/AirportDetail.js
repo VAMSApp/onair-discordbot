@@ -66,10 +66,11 @@ module.exports = function AirportDetail(x) {
     const Elevation = (x.Elevation) ? x.Elevation : ''
 
     let detail = ''
-    detail += `**[${x.ICAO}] ${Name}**\n`
     detail += `${FullLocation}\n`
-    
     detail += '\`\`\`';
+    detail += `AirNav: https://www.airnav.com/airport/${x.ICAO}\n`
+    detail += `AOPA: https://www.aopa.org/destinations/airports/${x.ICAO}/details\n`
+    detail += `SkyVector: https://skyvector.com/airport/${x.ICAO}\n`
     detail += `Transition Altitude: ${TransitionAltitude}\n`
     detail += `Size: ${Size}\n`
     detail += `Latitude: ${Latitude}\n`

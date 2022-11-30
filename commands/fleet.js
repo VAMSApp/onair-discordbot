@@ -4,8 +4,8 @@ const FleetList = require('@messages/FleetList')
 
 module.exports = {
 	data: new SlashCommandBuilder()
-	.setName('fleet-old')
-	.setDescription('Replies with the OnAir fleet')
+	.setName('fleet')
+	.setDescription('Replies with the OnAir VA\'s fleet')
     .addIntegerOption(option =>
 		option.setName('page')
 			.setDescription('What page of the fleet list to show')
@@ -25,9 +25,37 @@ module.exports = {
         const size = interaction.options.getInteger('size') || 5;
 
         let msg = ''
-        
-        setTimeout(async () => {
-            return await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
-        }, 1500);
+
+        await interaction.deferReply({ ephemeral: true })
+
+        let x = await OnAir.getFleet()
+        if (!x) msg = 'No fleet found'
+
+        if (x) {
+            msg = 'There '
+
+            if (x.length <= 0) {
+                msg += 'are no aircraft in the VA fleet yet'
+            } else if (x.length == 1) {
+                msg += `is ${x.length} aircraft currently in the VA fleet`
+            } else {
+                msg += `are ${x.length} aircraft currently in the VA fleet`
+            }
+
+            msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`
+
+            if (size) {
+                if (size && size.length > 5) {
+                    size = 5
+                }
+            }
+            
+            const slicedX = x.slice((page - 1) * size, page * size)
+
+            const fleetList = FleetList(slicedX)
+            msg += `\n${fleetList}`
+        }
+
+        await interaction.editReply({ content: `\`\`\`\n${msg}\`\`\``, ephemeral: true });
 	}
 }
