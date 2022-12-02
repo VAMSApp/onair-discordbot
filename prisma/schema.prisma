@@ -32,9 +32,11 @@ model Account {
   updatedAt       DateTime         @updatedAt
   approvalToken   String?
   approvedById    Int?
+  personId        Int?   @unique
   approvedAt      DateTime?
   approvedBy      Account?         @relation("ApprovedByAccount", fields: [approvedById], references: [id])
   approvals       Account[]        @relation("ApprovedByAccount")
+  person          Person? @relation(fields: [personId], references: [id])
   companies       Company[]
   vaInvitations   VAInvitation[]
   virtualAirlines VirtualAirline[]
@@ -157,7 +159,8 @@ model Company {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   invitations    VAInvitation[]
-  employees      Employee[]
+  employees      Person[]
+  notifications Notification[]
 }
 
 model Menu {
@@ -220,8 +223,8 @@ model Notification {
   aircraftGuid   String?
   flightGuid     String?
   accountGuid    String?
-  employeeGuid   String?
-  employeeId     Int?
+  personGuid     String?
+  personId       Int?
   isRead         Boolean        @default(false)
   isNotification Boolean        @default(false)
   zuluEventTime  DateTime
@@ -230,10 +233,11 @@ model Notification {
   description    String
   amount         Int            @default(0)
   va             VirtualAirline @relation(fields: [vaId], references: [id])
-  employee       Employee?      @relation(fields: [employeeId], references: [id])
+  company        Company?       @relation(fields: [companyId], references: [id])
+  person         Person?      @relation(fields: [personId], references: [id])
 }
 
-model Employee {
+model Person {
   id                           Int            @id @default(autoincrement())
   guid                         String         @unique
   pseudo                       String
@@ -244,8 +248,10 @@ model Employee {
   category                     Int
   status                       Int
   lastStatusChange             DateTime
+  onAirSyncedAt                DateTime?
   isOnline                     Boolean        @default(false)
   flightHoursGrandTotal        Float?
   company                      Company        @relation(fields: [companyId], references: [id])
   notifications                Notification[]
+  account                      Account?
 }

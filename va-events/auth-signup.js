@@ -4,15 +4,6 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, } = require('disco
 
 module.exports = {
     name: 'auth-signup',
-    async subscribe (channel, err, count, { Client, }) {
-        return new Promise((resolve, reject) => {
-            if (!channel) return reject('Channel name is required');
-            if (err) return reject(err);
-
-            Logger.info(`Subscribed to '${channel}' VA Event. Now subscribe to ${count} VA Events`);
-            return resolve(null, count);
-        });
-    },
     async execute (channelName, { approvalUrl, username, discriminator, }, discord) {
         const channelId = discord.getChannelId(channelName);
         if (channelName !== this.name) return;

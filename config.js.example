@@ -2,36 +2,57 @@ const { GatewayIntentBits } = require("discord.js");
 
 /* config */
 const config = {
-  logLevel: 'info', // debug, info, warn, error
+  logLevel: 'debug', // logging level one of; debug, info, warn, error
   VAEvents: {
-    'auth-signup': '### CHANNEL ID ###',
-    'discord': '### CHANNEL ID ###',
+    enabled: true, // if set to true, bot will subscribe to VA Events
+    channels: {
+      'auth-signup': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send auth signup event messages to
+      'auth-signin': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send auth signin event messages to
+      'discord': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send discord event messages to
+      'OnConnectNoticeChannel': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send OnConnectNotice event messages to
+      'onair-notifications': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send onair VA notification messages to
+    },
+    poll: {
+      VADetails: {
+        enabled: true, // if set to true, bot will routinely poll OnAir for the current VA details
+        cron: '*/15 * * * *', // will run cron task every 15 minutes
+      },
+      VAJobs: {
+        enabled: false, // if set to true, bot will routinely poll OnAir for the latest VA Jobs status
+        cron: '*/5 * * * *',  // will run cron task every 5 minutes
+      },
+      VAFleet: {
+        enabled: false, // if set to true, bot will routinely poll OnAir for the current VA fleet status
+        cron: '* */5 * * *',  // will run cron task every 5 minutes
+      },
+      VANotifications: {
+        enabled: true, // if set to true, bot will routinely poll OnAir for the current VA Notifications
+        cron: '*/2 * * * *',  // will run cron task every 2 minutes
+      },
+    },
+    refreshOnStartup: true, // if set to true, bot will run all enabled refresh tasks on startup
   },
-  OnConnectNotice: true,
-  discordBotEnabled: false,
-  onAirPollingEnabled: false,
-  discord_token: '### ADD YOUR DISCORD BOT TOKEN HERE ###',
-  discord_clientId: '### ADD YOUR DISCORD BOT CLIENT ID HERE ###',
-  discord_guildId: '### ADD YOUR DISCORD GUILD ID HERE ###',
-  deployCommands: true,
-  OnConnectNotice: false,
-  
+  OnConnectNotice: false, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
+  OnConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
+  onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
+  discordBotEnabled: false, // if set to true, bot will connect to Discord
+  discord_token: '##_ADD_DISCORD_TOKEN_HERE_##',
+  discord_clientId: '##_ADD_DISCORD_CLIENT_ID_HERE_##',
+  discord_guildId: '##_ADD_DISCORD_GUILD_ID_HERE_##',
+  deployCommands: true, // if set to true, bot will auto deploy slash commands at startup to Discord
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.DirectMessages,
   ],
-
   redis: {
     host: 'localhost',
     port: 6379,
-    password: '',
+    db: "0",
+    password: "##_ADD_REDIS_PASSWORD_HERE_##",
   },
   onAir: {
-    companyId: '### ONAIR COMPANY ID ###',
-    vAId: '### ONAIR VA ID ###',
-    apiKey: '### ONAIR API KEY ###',
+    companyId: '##_ADD_ONAIR_COMPANY_ID_HERE_##',
+    vAId: '##_ADD_ONAIR_VA_ID_HERE_##',
+    apiKey: '##_ADD_ONAIR_API_KEY_HERE_##',
   }
 };
 

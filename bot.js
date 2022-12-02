@@ -1,5 +1,6 @@
 const Logger = require('@lib/logger.js')
-const cron = require('node-cron')
+const cron = require('node-cron');
+const cronstrue = require('cronstrue');
 
 const {
     Client, REST, EmbedBuilder, SlashCommandBuilder, Collection, GatewayIntentBits
@@ -13,14 +14,16 @@ const EventService = require('./lib/EventService');
 const OnAirApi = require('./lib/onair');
 
 class Bot {
+    Config = Config;
     AppToken = Config.discord_token;
     ClientId = Config.discord_clientId;
     GuildId = Config.discord_guildId;
     ChannelId = Config.discord_channelId;
-    Config = Config;
     OnAir = OnAirApi;
     Client = undefined;
     VAEvents = undefined;
+    Cron = undefined;
+    Schedules = undefined;
 
     constructor() {
         if (!this.AppToken) throw 'No discord_token defined in .env'
@@ -31,11 +34,19 @@ class Bot {
         this.loadCommands = this.loadCommands.bind(this);
         this.login = this.login.bind(this);
         this.deployCommands = this.deployCommands.bind(this);
-        this.subscribeToVAEvents = this.subscribeToVAEvents.bind(this);
         this.getChannelId = this.getChannelId.bind(this);
-        this.refreshVANotifications = this.refreshVANotifications.bind(this);
         
-        Logger.info('starting up Discord Bot')
+        Logger.debug('Bot::constructor - starting up Discord Bot')
+            
+        if (this.Config.VAEvents.enabled) {
+            this.VAEvents = EventService;
+            this.Cron = cron;
+            this.loadSchedules = this.loadSchedules.bind(this);
+            this.loadVAEvents = this.loadVAEvents.bind(this);
+            this.loadVAEvents();                
+            
+            this.loadSchedules();
+        }
 
         this.initializeClient();
         this.loadCommands()
@@ -44,30 +55,19 @@ class Bot {
         this.login()
 
         this.Client.on('ready', async (client) => {
-            Logger.info(`Logged into discord server as ${client.user.tag}`)
-            
+            const discordServerName = client.guilds.cache.map(g => g.name).join('\n')
+            Logger.info(`Logged into the ${discordServerName} discord server as ${client.user.tag}`);
+        
             if (this.Config.OnConnectNotice === true) {
                 const readyMsg = require('./messages/onReadyMessage')()
                 
                 client
                 .channels
-                .fetch(this.getChannelId('discord'))
+                .fetch(this.getChannelId('OnConnectNoticeChannel'))
                 .then((channel) => channel.send(readyMsg).then((msg) => (this.Config.OnConnectNoticeAutoDelete === true) ? setTimeout(() => msg.delete(), this.Config.onConnectNoticeAutoDeleteAfter || 10000) : null ));
                 
             }
-            
-            if (this.Config.VAEvents.enabled) {
-                this.VAEvents = EventService;
-                this.subscribeToVAEvents();                
-            }
-
-            if (this.Config.poll.enabled === true) { 
-                this.scheduleCrons = this.scheduleCrons.bind(this);
-                Logger.info(`✅ Polling is enabled`);
-                this.scheduleCrons();
-            }
         });
-
     }
 
     initializeClient() {
@@ -108,10 +108,10 @@ class Bot {
             }
         })
 
-        Logger.info(`✅ Loaded ${commands.length} Commands`)
+        Logger.info(`✅ Loaded ${commands.length} slash commands`)
     }
 
-    subscribeToVAEvents() {
+    loadVAEvents() {
         const self = this;
 
         const events = readdirSync(path.join(__dirname, 'va-events')).filter(file => {
@@ -122,23 +122,21 @@ class Bot {
         for (const file of events) {
             const event = require(path.join(__dirname, 'va-events', file));
             Logger.debug(`Will subscribe to event: ${event.name}`);
-            self.VAEvents.subscribe(event.name, (err, count) => event.subscribe(event.name, err, count, self))
-            .then(function (count) {
-                self.VAEvents.Subscriber.on('message', (channel, msg) => {
-                    try {
-                        msg = JSON.parse(msg);
-                    } catch (e) {
-                    }
+            // self.VAEvents.subscribe(event.name, (err, count) => async event.subscribe(event.name, err, count, self))
 
-                    event.execute(channel, msg, self);
-                });
+            self.VAEvents.subscribe(event.name, async (err, count) => {
+                if (!channel) return;
+                if (err) return;
+                Logger.info(`Subscribed to the '${channel}' VA Event`);
+                return count;
             })
+            .then((count) => self.VAEvents.Subscriber.on('message', (channel, msg) => event.execute(channel, msg, self)))
             .catch(function (err) {
-                Logger.error(`Error subscribing to VAEvents channel: ${err}`);
+                Logger.error(`⚠️ Error subscribing to the ${event.name} VAEvents channel - ${err}`);
             });
         }
         
-        Logger.info(`✅ Loaded ${events.length} VA Events`)
+        Logger.info(`✅ Subscribed to ${events.length} VA Event${(events.length > 1) ? 's' : ''}`)
 
     }
 
@@ -156,41 +154,102 @@ class Bot {
         this.Client.login(this.AppToken)
     }
 
-    scheduleCrons() {
+    loadSchedules() {
         const self = this;
+        const {
+            VAEvents
+        } = self.Config;
 
-        if (this.Config.poll.VADetails === true) {
-            Logger.info(`✅ Polling for VA Details is enabled, will poll every 5 minutes`);
-            // run va refresh every 5 minutes
-            cron.schedule('*/5 * * * *', self.refreshVADetails);
+        const enabledScheduleKeys = Object.keys(VAEvents.poll).filter((k) => (VAEvents.poll[k].enabled === true));
+
+        if (enabledScheduleKeys.length === 0 || !enabledScheduleKeys) return;
+
+        // read all files in the 'schedules' directory
+        const schedules = readdirSync(path.join(__dirname, 'schedules')).filter(file => {
+            const isEnabled = enabledScheduleKeys.includes(file.split('.')[0]);
+            return (isEnabled) ? file : false;
+        });
+
+        if (schedules.length === 0 || !schedules) {
+            Logger.debug(`No schedules found in the 'schedules' directory`);
+            return; 
         }
 
-        if (this.Config.poll.VANotifications == true) {
-            setTimeout(() => {
-                self.refreshVANotifications();
-            }, 3000);
-            Logger.info(`✅ Polling for VA Notifications is enabled, will poll every minute`);
-            // run notifications check every minute
-            cron.schedule('* * * * *', self.refreshVANotifications);
+        // loop through all of the schedules and load them
+        for (const file of schedules) {
+            const schedule = require(path.join(__dirname, 'schedules', file));
+            if (!schedule) continue;
+            const taskName = file.split('.')[0];
+
+            const pollCfg = VAEvents.poll[taskName]; // the schedule config
+            if (!pollCfg || !pollCfg.cron) continue;
+
+            if (!cron.validate(pollCfg.cron)) {
+                Logger.error(`⚠️ Invalid cron expression for '${file}'`);
+                continue;
+            }
+
+            cron.schedule(pollCfg.cron, () => schedule.execute(self), schedule.opts);
+            Logger.info(`✅ Scheduled::${taskName} - Will ${schedule.name} ${cronstrue.toString(pollCfg.cron)}`);
         }
+
+        Logger.info(`✅ Scheduled ${enabledScheduleKeys.length} Tasks`);
     }
 
-    async refreshVADetails() {
-        Logger.debug(`Refreshing VA Details`);
-        await this.OnAir.refreshVADetails();
-    }
-
-    async refreshVANotifications() {
-        Logger.debug(`Polling for VA Notifications`);
-        await this.OnAir.refreshVANotifications();
+    // scheduleCrons() {
+    //     const self = this;
         
-        // if (notifications.length > 0) {
-        //     const channel = await this.Client.channels.fetch(this.getChannelId('onair-notifications'));
-        //     const msg = require('./messages/Notification')(notifications)
+    //     const enabledPolls = Object.keys(cfg.poll).filter((key) => (cfg.poll[key].enabled));
+    //     if (enabledPolls.length === 0) return;
 
-        //     channel.send(msg);
-        // }
-    }
+    //     enabledPolls.forEach((key) => {
+    //         const pollCfg = cfg.poll[key];
+
+    //         if (pollCfg.cron !== undefined) {
+    //             if (!cron.validate(pollCfg.cron)) return;
+    //             Logger.info(`✅ Polling for ${key} is enabled and will run ${cronstrue.toString(pollCfg.cron)}`);
+
+    //         } else if (pollCfg.interval !== undefined) {
+    //             const interval = (typeof pollCfg.interval !== 'number') ? parseInt(pollCfg.interval) : pollCfg.interval;
+    //             setInterval(() => {
+
+    //             })
+    //         }
+
+    //         Logger.info(`✅ Polling for VA Details is enabled, will poll every 5 minutes`);
+    //         // run va refresh every 5 minutes
+    //         cron.schedule('*/5 * * * *', self.refreshVADetails);
+    //     }
+
+
+    //     if (this.Config.poll.VANotifications.enabled == true) {
+
+    //         setTimeout(() => {
+    //             self.refreshVANotifications();
+    //         }, 3000);
+
+    //         Logger.info(`✅ Polling for VA Notifications is enabled, will poll every minute`);
+    //         // run notifications check every minute
+    //         cron.schedule('* * * * *', self.refreshVANotifications);
+    //     }
+    // }
+
+    // async refreshVADetails() {
+    //     Logger.debug(`Refreshing VA Details`);
+    //     await this.OnAir.refreshVADetails();
+    // }
+
+    // async refreshVANotifications() {
+    //     Logger.debug(`Polling for VA Notifications`);
+    //     await this.OnAir.refreshVANotifications();
+        
+    //     // if (notifications.length > 0) {
+    //     //     const channel = await this.Client.channels.fetch(this.getChannelId('onair-notifications'));
+    //     //     const msg = require('./messages/Notification')(notifications)
+
+    //     //     channel.send(msg);
+    //     // }
+    // }
 
     async deployCommands() {
         const commands = [];

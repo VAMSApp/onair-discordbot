@@ -1,13 +1,34 @@
 const BaseRepo = require('./BaseRepo');
 
 class CompanyRepoClass extends BaseRepo {
+    IsSyncable = true;
+
     constructor() {
         super('company')
         this.upsert = this.upsert.bind(this)
         this.upsertByGuid = this.upsertByGuid.bind(this)
         this.findByOwnerId = this.findByOwnerId.bind(this)
-        this.findByGuid = this.findByGuid.bind(this)
+        this.findByAirlineCode = this.findByAirlineCode.bind(this)
         this.translate = this.translate.bind(this)
+    }
+
+    async findByAirlineCode(airlineCode, opts) {
+        const self = this;
+        if (!airlineCode) throw new Error('Airline Code is required');
+
+        const query = {
+            where: {
+                airlineCode: airlineCode,
+            },
+            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.findUnique(query)
+            .then((x) => self.determineCanSync(x))
+            .then((x) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
     async findByOwnerId(ownerId, opts) {
@@ -26,28 +47,6 @@ class CompanyRepoClass extends BaseRepo {
             .then((x) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
             .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
-    }
-
-    determineCanSync (x) {
-        if (!x) return null;
-        let canSync = false;
-    
-        // if onAirSyncedAt is not null
-        if (x.onAirSyncedAt) {
-            const currentDate = new Date()
-            const onAirSyncedAt = new Date(x.onAirSyncedAt)
-            const ONE_MIN = 1*60*1000
-    
-            // if the difference between the current date and the onAirSyncedAt date is greater than 1 minute
-            if ((currentDate - onAirSyncedAt) > ONE_MIN) {
-                canSync = true
-            }
-        }
-    
-        return {
-            ...x,
-            canSync,
-        }
     }
 
     async upsert(id, payload, opts) {
@@ -78,7 +77,7 @@ class CompanyRepoClass extends BaseRepo {
         const self = this;
         if (!companyId) throw new Error('companyId is required');
         if (!payload) throw new Error('payload is required');
-        const translated = await this.translate(payload);
+        const translated = this.translate(payload);
         const query = {
             where: {
                 guid: (typeof companyId === 'string') ? companyId : companyId.toString(),
@@ -95,7 +94,7 @@ class CompanyRepoClass extends BaseRepo {
             .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
-    async translate(input) {
+    translate(input) {
         if (!input) throw new Error('No input provided');
         
         // determine if this is an update or a create by checking if the id is present
@@ -135,12 +134,11 @@ class CompanyRepoClass extends BaseRepo {
                 disableSeatsConfigCheck: input.DisableSeatsConfigCheck,
                 realisticSimProcedures: input.RealisticSimProcedures,
                 travelTokens: input.TravelTokens,
-                virtualAirlineId: input.VirtualAirlineId,
                 currentBadgeId: input.CurrentBadgeId,
                 currentBadgeUrl: input.CurrentBadgeUrl,
                 currentBadgeName: input.CurrentBadgeName,
                 lastWeeklyManagementsPaymentDate: (input.LastWeeklyManagementsPaymentDate) ? new Date(input.LastWeeklyManagementsPaymentDate) : null,
-                onAirSyncedAt: (input.OnAirSyncedAt) ? new Date(input.OnAirSyncedAt) : null,
+                onAirSyncedAt: (input.OnAirSyncedAt) ? (typeof input.OnAirSyncedAt !== Date) ? new Date(input.OnAirSyncedAt) : input.OnAirSyncedAt : null,
                 virtualAirline: (input.vaId) ? { connect: { id: input.vaId } } : undefined,
                 owner: (input.ownerId) ? { connect: { id: input.ownerId} } : undefined,
             }
@@ -182,31 +180,13 @@ class CompanyRepoClass extends BaseRepo {
                 currentBadgeUrl: input.CurrentBadgeUrl,
                 currentBadgeName: input.CurrentBadgeName,
                 lastWeeklyManagementsPaymentDate: (input.LastWeeklyManagementsPaymentDate) ? new Date(input.LastWeeklyManagementsPaymentDate) : null,
-                onAirSyncedAt: (input.OnAirSyncedAt) ? new Date(input.OnAirSyncedAt) : null,
+                onAirSyncedAt: (input.OnAirSyncedAt) ? (typeof input.OnAirSyncedAt !== Date) ? new Date(input.OnAirSyncedAt) : input.OnAirSyncedAt : null,
                 virtualAirline: (input.vaId) ? { connect: { id: input.vaId } } : undefined,
                 owner: (input.ownerId) ? { connect: { id: input.ownerId} } : undefined,
             }
         }
 
         return translated
-    }
-
-    async findByGuid(guid, opts) {
-        const self = this;
-        if (!guid) throw new Error('guid is required');
-
-        const query = {
-            where: {
-                guid: guid,
-            },
-            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
-            include: (opts?.include) ? opts.include : undefined,
-        }
-
-        return await this.Model.findUnique(query)
-            .then((x) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
 }

@@ -1,5 +1,6 @@
 const Prisma = require('@db');
 const moment = require('moment');
+const { Logger } = require('winston');
 
 function _humanize(date) {
     if (!date) throw new Error('Date is required');
@@ -11,6 +12,7 @@ function _humanize(date) {
 class BaseRepo {
     Model;
     prisma = Prisma;
+    IsSyncable = false;
 
     constructor(model) {
         if (!model) throw new Error('No model name provided');
@@ -20,16 +22,54 @@ class BaseRepo {
         this.update = this.update.bind(this);
         this.findAll = this.findAll.bind(this);
         this.findById = this.findById.bind(this);
+        this.findByGuid = this.findByGuid.bind(this)
+        this.findFirst = this.findFirst.bind(this)
         this.destroy = this.destroy.bind(this);
         this.humanize = this.humanize.bind(this);
         this.serialize = this.serialize.bind(this);
         this.omit = this.omit.bind(this);
         
+        if (this.IsSyncable) {
+            this.determineCanSync = this.determineCanSync.bind(this);
+        }
+    }
+
+    
+
+    determineCanSync (x) {
+        if (!x) return null;
+        let canSync = false;
+    
+        // if onAirSyncedAt is not null
+        if (x.onAirSyncedAt) {
+            const currentDate = new Date()
+            const onAirSyncedAt = (typeof x.onAirSyncedAt === 'string') ? new Date(x.onAirSyncedAt) : x.onAirSyncedAt;
+            const ONE_MIN = 1*60*1000
+    
+            // if the difference between the current date and the onAirSyncedAt date is greater than 1 minute
+            if ((currentDate - onAirSyncedAt) > ONE_MIN) {
+                canSync = true
+            }
+        }
+    
+        return {
+            ...x,
+            canSync,
+        }
     }
 
     serialize(x) {
         if (!x) throw new Error('Record is required');
-        return JSON.parse(JSON.stringify(x));
+        let parsedX = undefined;
+        try {
+            parsedX = JSON.parse(JSON.stringify(x));
+        }
+        catch(e) {
+            Logger.error(`Error parsing JSON ${(e) ? e : ''}`);
+            parsedX = x;
+        }
+
+        return parsedX
     }
 
     humanize(x, keys) {
@@ -153,6 +193,43 @@ class BaseRepo {
             .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
+    async findByGuid(guid, opts) {
+        const self = this;
+        if (!guid) throw new Error('guid is required');
+
+        const query = {
+            where: {
+                guid: guid,
+            },
+            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        try {
+            const x = await this.Model.findUnique(query)
+            return x;
+        }
+        catch(err) {
+            Logger.error(`Error finding by guid: ${err}`);
+            return null;
+        }
+    }
+
+    async findFirst(opts) {
+        const self = this;
+
+        const query = {
+            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.findFirst(query)
+            .then((x) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x) => (x && opts?.serialize) ? self.serialize(x) : x)
+    }
+
+    
     async destroy(id, opts) {
         const self = this;
         if (!id) throw new Error('Id is required');

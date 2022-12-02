@@ -4,11 +4,6 @@ const Config = require('@config')
 
 module.exports = {
     name: 'onair-notifications',
-    async subscribe (channel, err, count, { Client, }) {
-        if (!channel) return;
-        if (err) return;
-        Logger.info(`Subscribed to '${channel}' VA Event. Now subscribe to ${count} VA Events`);
-    },
     async execute (channelName, data, discord) {
         const channelId = discord.getChannelId(channelName);
         if (channelName !== this.name) return;
@@ -21,25 +16,22 @@ module.exports = {
             Logger.error(`Error parsing VAEvents message: ${e}`);
         }
 
-        console.log("\n\n")
-        console.log(data);
-        console.log("\n\n")
-
-        let msg = `Received new OnAir VA Event at ${data.zuluEventTime}: ${data.description}`;
+        let msg = `Received a new OnAir notification at ${data.zuluEventTime}: ${data.description}`;
         Logger.info(`Received VA Event '${channelName}' msg: ${msg}`);
 
         const fields = []
-        if (data.employee) {
+
+        if (data.person) {
             fields.push({
                 "name": `Employee`,
-                "value": `${data.employee.pseudo}`,
+                "value": `${data.person.pseudo}`,
                 "inline": true
             })
             
-            if (data.employee.company) {
+            if (data.person.company) {
                 fields.push({
                     "name": `Company`,
-                    "value": `${data.employee.company.airlineCode}`,
+                    "value": `${data.person.company.airlineCode}`,
                     "inline": true
                 });
             }
@@ -54,7 +46,7 @@ module.exports = {
         } if (data.amount) {
             fields.push({
               "name": `Amount`,
-              "value": `${data.amount}`
+              "value": `$ ${data.amount.toFixed(2)}`
             })
         }
 

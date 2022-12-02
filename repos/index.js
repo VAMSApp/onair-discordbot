@@ -7,7 +7,7 @@ const VirtualAirlineRepo = './VirtualAirlineRepo';
 const VAInviteRepo = './VAInviteRepo';
 const EmailRepo = './EmailRepo';
 const NotificationRepo = './NotificationRepo';
-const EmployeeRepo = './EmployeeRepo';
+const PersonRepo = './PersonRepo';
 
 
 module.exports = {
@@ -20,5 +20,5 @@ module.exports = {
     VAInviteRepo,
     EmailRepo,
     NotificationRepo,
-    EmployeeRepo,
+    PersonRepo,
 }

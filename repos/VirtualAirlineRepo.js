@@ -1,12 +1,13 @@
 const BaseRepo = require('./BaseRepo');
 
 class VirtualAirlineRepoClass extends BaseRepo {
+    IsSyncable = true;
+    
     constructor() {
         super('virtualAirline')
         this.upsert = this.upsert.bind(this)
         this.upsertByGuid = this.upsertByGuid.bind(this)
         this.findByOwnerId = this.findByOwnerId.bind(this)
-        this.getFirst = this.getFirst.bind(this)
         this.determineCanSync = this.determineCanSync.bind(this)
         this.translate = this.translate.bind(this)
     }
@@ -80,7 +81,7 @@ class VirtualAirlineRepoClass extends BaseRepo {
         if (!vaId) throw new Error('vaId is required');
         if (!payload) throw new Error('payload is required');
 
-        const translated = await this.translate(payload);
+        const translated = this.translate(payload);
 
         const query = {
             where: {
@@ -122,35 +123,7 @@ class VirtualAirlineRepoClass extends BaseRepo {
         }
     }
 
-    async getFirst(opts) {
-        const self = this;
-        const query = {
-            where: {
-                id: {
-                    gt: 0,
-                }
-            },
-            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
-            include: (opts?.include) ? opts.include : undefined,
-        }
-
-        return await this.Model.findFirst(query)
-        .then((x) => (x) ? self.determineCanSync(x) : x)
-        .then((x) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-        .then((x) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-        .then((x) => {
-            if (x && opts?.serialize) {
-                x.lastDividendsDistribution = x.lastDividendsDistribution.toString();
-                x.createdAt = x.createdAt.toString()
-                x.updatedAt = x.updatedAt.toString()
-                return JSON.parse(JSON.stringify(x));
-            } else {
-                return x
-            }
-        })
-    }
-
-    async translate(input) {
+    translate(input) {
         if (!input) throw new Error('No input provided');
         
         // determine if this is an update or a create by checking if the id is present
@@ -200,7 +173,7 @@ class VirtualAirlineRepoClass extends BaseRepo {
                 disableSeatsConfigCheck: input.DisableSeatsConfigCheck,
                 realisticSimProcedures: input.RealisticSimProcedures,
                 travelTokens: (input.TravelTokens) ? parseInt(input.TravelTokens) : undefined,
-                onAirSyncedAt: (input.OnAirSyncedAt) ? new Date(input.OnAirSyncedAt) : null,
+                onAirSyncedAt: (input.OnAirSyncedAt) ? (typeof input.OnAirSyncedAt !== Date) ? new Date(input.OnAirSyncedAt) : input.OnAirSyncedAt : null,
             }
         } else {
             translated = {
@@ -245,7 +218,7 @@ class VirtualAirlineRepoClass extends BaseRepo {
                 disableSeatsConfigCheck: input.disableSeatsConfigCheck,
                 realisticSimProcedures: input.realisticSimProcedures,
                 travelTokens: (input.travelTokens) ? parseInt(input.travelTokens) : undefined,
-                onAirSyncedAt: (input.onAirSyncedAt) ? new Date(input.onAirSyncedAt) : null,
+                onAirSyncedAt: (input.OnAirSyncedAt) ? (typeof input.OnAirSyncedAt !== Date) ? new Date(input.OnAirSyncedAt) : input.OnAirSyncedAt : null,
             }
         }
 
