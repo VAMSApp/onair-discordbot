@@ -1,0 +1,2 @@
+# change this to your postgresql database url and rename to .env
+DATABASE_URL="postgresql://default:secret@localhost:5432/onairDiscordBot?schema=public"
