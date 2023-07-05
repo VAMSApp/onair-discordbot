@@ -4,7 +4,7 @@ const { GatewayIntentBits } = require("discord.js");
 const config = {
   logLevel: 'debug', // logging level one of; debug, info, warn, error
   VAEvents: {
-    enabled: true, // if set to true, bot will subscribe to VA Events
+    enabled: false, // if set to true, bot will subscribe to VA Events
     channels: {
       'auth-signup': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send auth signup event messages to
       'auth-signin': '###_ADD_DISCORD_CHANNEL ID_HERE_###', // The channel to send auth signin event messages to
@@ -30,7 +30,7 @@ const config = {
         cron: '*/2 * * * *',  // will run cron task every 2 minutes
       },
     },
-    refreshOnStartup: true, // if set to true, bot will run all enabled refresh tasks on startup
+    refreshOnStartup: false, // if set to true, bot will run all enabled refresh tasks on startup
   },
   OnConnectNotice: false, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
   OnConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
