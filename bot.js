@@ -10,7 +10,6 @@ const { readdirSync } = require('fs')
 const path = require('path')
 const Config = require('./config');
 const IORedis = require('ioredis');
-const EventService = require('./lib/EventService');
 const OnAirApi = require('./lib/onair');
 
 class Bot {
@@ -39,7 +38,7 @@ class Bot {
         Logger.debug('Bot::constructor - starting up Discord Bot')
             
         if (this.Config.VAEvents.enabled) {
-            this.VAEvents = EventService;
+            this.VAEvents = require('./lib/EventService');
             this.Cron = cron;
             this.loadSchedules = this.loadSchedules.bind(this);
             this.loadVAEvents = this.loadVAEvents.bind(this);
