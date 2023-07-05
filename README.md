@@ -4,9 +4,12 @@ A bot that integrates Your OnAir Company or VA's details into Discord. Currently
 ## How to use
 * clone the repository `git clone git@github.com:vams-app/onair-discordbot.git`
 * install the required nodejs modules `npm i`
-* copy `.env-example` to `.env`
+* copy `.example-env` to `.env`
 * copy `config.js.example` to `config.js`
 * fill out `.env` with required information
+* fill out `config.js` with required information
+  * Update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/vams-app/onair-discordbot/wiki/Creating-Your-Discord-bot) wiki for more
+  * Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this](https://github.com/vams-app/onair-discordbot/wiki/Obtaining-Your-OnAir-Credentials) wiki for more
 * finally, run the bot by executing `npm start`
 
 By default the Bot should send a message in the configured channel when it comes online. Simply interact with the bot using one of the below commands
@@ -14,9 +17,9 @@ By default the Bot should send a message in the configured channel when it comes
 ## Bot Commands
 
 ### Airport (/airport :icao)
-provides details of a given airport code. In the future will provide the list of planned Arrival and Departure jobs
+Provides details of a given airport code. In the future will provide the list of planned Arrival and Departure jobs
 
-### Params
+#### Params
 | Name | Desc | Default |
 | --- | --- | --- |
 | page | Page # to show | 1 |
@@ -48,9 +51,9 @@ Not working yet
 ```
 
 ### Members (/members)
-lists all the current VA members
+lists all of the current VA members
 
-### Params
+#### Params
 | Name | Desc | Default |
 | --- | --- | --- |
 | page | Page # to show | 1 |
@@ -72,7 +75,7 @@ lists all the current VA members
 ### Fleet (/fleet)
 lists all of the fleet for the given VA
 
-### Params
+#### Params
 | Name | Desc | Default |
 | --- | --- | --- |
 | page | Page # to show | 1 |
@@ -94,7 +97,7 @@ There are 6 aircraft currently in the fleet
 ### Jobs (/jobs)
 lists all of the pending or in-progress jobs for the given VA
 
-### Params
+#### Params
 | Name | Desc | Default |
 | --- | --- | --- |
 | page | Page # to show | 1 |
@@ -114,7 +117,7 @@ Goods transport     $1,110    1 leg
 ### Flights (/flights)
 lists all of the flights for the given VA
 
-### Params
+#### Params
 | Name | Desc | Default |
 | --- | --- | --- |
 | page | Page # to show | 1 |
@@ -141,6 +144,7 @@ Showing page 1 of 10
 ```
 
 ## Planned Features
-* Add cash flow related commands to indicate income vs expense and profit margins
 * Add persistence layer e.g. db to track data over time
-* polling & alerting functionality for flight & job status changes
+* Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/vams-app/onair-discordbot/issues/2)
+* Ability for users to link their Discord account to their OnAir company, see [#3](https://github.com/vams-app/onair-discordbot/issues/3)
+* polling & alerting functionality for flight & job status changes, see[#4](https://github.com/vams-app/onair-discordbot/issues/4)
