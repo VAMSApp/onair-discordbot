@@ -9,6 +9,9 @@
     "start": "node index.js",
     "watch": "nodemon watch"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "author": {
     "name": "Mike DeVita",
     "email": "mike@devita.co"
@@ -48,7 +51,7 @@
     "module-alias": "^2.2.2",
     "moment": "^2.29.4",
     "node-cron": "^3.0.2",
-    "onair-api": "file:../../onair-api",
+    "onair-api": "^2.4.0",
     "reflect-metadata": "^0.1.13",
     "winston": "^3.8.2"
   },
