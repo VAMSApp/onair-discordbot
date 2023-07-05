@@ -148,3 +148,6 @@ Showing page 1 of 10
 * Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/vams-app/onair-discordbot/issues/2)
 * Ability for users to link their Discord account to their OnAir company, see [#3](https://github.com/vams-app/onair-discordbot/issues/3)
 * polling & alerting functionality for flight & job status changes, see[#4](https://github.com/vams-app/onair-discordbot/issues/4)
+
+## Help & Support
+feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
