@@ -110,9 +110,9 @@ class NotificationRepoClass extends BaseRepo {
                         id: (typeof input.Person.id !== 'number') ? Number(input.Person.id) : input.Person.id,
                     }
                 } : undefined,
-                va: (input.va) ? {
+                va: (input.VirtualAirline) ? {
                     connect: {
-                        id: (typeof input.va.id !== 'number') ? Number(input.va.id) : input.va.id,
+                        id: (typeof input.VirtualAirline.id === 'string') ? parseInt(input.VirtualAirline.id) : input.VirtualAirline.id,
                     }
                 } : undefined,
             }
