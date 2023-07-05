@@ -1,16 +1,16 @@
-const Logger = require('@lib/logger.js')
-const cron = require('node-cron');
-const cronstrue = require('cronstrue');
-
 const {
     Client, REST, EmbedBuilder, SlashCommandBuilder, Collection, GatewayIntentBits
 } = require('discord.js')
 const { Routes } = require('discord-api-types/v9');
 const { readdirSync } = require('fs')
 const path = require('path')
-const Config = require('./config');
+const cron = require('node-cron');
+const cronstrue = require('cronstrue');
+const Logger = require('@lib/logger.js')
+const Config = require('@config');
 const IORedis = require('ioredis');
-const OnAirApi = require('./lib/onair');
+const OnAirApi = require('@lib/onair');
+const GeneralBotErrorMessage = require('@messages/GeneralBotErrorMessage');
 
 class Bot {
     Config = Config;
@@ -37,8 +37,14 @@ class Bot {
         
         Logger.debug('Bot::constructor - starting up Discord Bot')
             
+        /**
+         * If VAEvents is enabled, load the EventService and Cron schedules
+         * @todo move VAEvents logic to a separate file, probably within the
+         *  OnAirApi class in lib/onair.js
+         */
         if (this.Config.VAEvents.enabled) {
-            this.VAEvents = require('./lib/EventService');
+            const EventService = require('./lib/EventService');
+            this.VAEvents = new EventService();
             this.Cron = cron;
             this.loadSchedules = this.loadSchedules.bind(this);
             this.loadVAEvents = this.loadVAEvents.bind(this);
@@ -102,8 +108,8 @@ class Bot {
                 await command.execute(interaction);
             } catch (error) {
                 console.error(error);
-                await interaction.reply({ content: 'There was an error while executing this command! Please let Eric | ZSE | TPC76 know ASAP so that a fix can occur!'
-                        +'\n \nIf this is the booking or PIREP Command, please un-archive the channel as this is the reason you are getting this error', ephemeral: true });
+                const msg = GeneralBotErrorMessage(error);
+                await interaction.reply({ content: msg, ephemeral: true });
             }
         })
 
@@ -194,7 +200,36 @@ class Bot {
 
         Logger.info(`✅ Scheduled ${enabledScheduleKeys.length} Tasks`);
     }
+    
+    async deployCommands() {
+        const commands = [];
+        const commandFiles = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith(".js"));
+        for (const file of commandFiles) {
+            const command = require(`./commands/${file}`);
+            commands.push(command.data.toJSON());
+            Logger.debug(`Will deploy command: ${command.data.name}`)
+        }
+        
+        const rest = new REST({ version: '10' }).setToken(this.AppToken);
+        
 
+        try {
+            Logger.debug('Started reloading slash commands.');
+    
+            await rest.put(
+                Routes.applicationGuildCommands(this.ClientId, this.GuildId),
+                { body: commands },
+            );
+    
+            // Logger.info('✅ Deployed slash commands.');
+        } catch (error) {
+            Logger.error(error);
+        }
+    }
+    
+    /**
+     * @deprecated
+     */
     // scheduleCrons() {
     //     const self = this;
         
@@ -232,49 +267,6 @@ class Bot {
     //         cron.schedule('* * * * *', self.refreshVANotifications);
     //     }
     // }
-
-    // async refreshVADetails() {
-    //     Logger.debug(`Refreshing VA Details`);
-    //     await this.OnAir.refreshVADetails();
-    // }
-
-    // async refreshVANotifications() {
-    //     Logger.debug(`Polling for VA Notifications`);
-    //     await this.OnAir.refreshVANotifications();
-        
-    //     // if (notifications.length > 0) {
-    //     //     const channel = await this.Client.channels.fetch(this.getChannelId('onair-notifications'));
-    //     //     const msg = require('./messages/Notification')(notifications)
-
-    //     //     channel.send(msg);
-    //     // }
-    // }
-
-    async deployCommands() {
-        const commands = [];
-        const commandFiles = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith(".js"));
-        for (const file of commandFiles) {
-            const command = require(`./commands/${file}`);
-            commands.push(command.data.toJSON());
-            Logger.debug(`Will deploy command: ${command.data.name}`)
-        }
-        
-        const rest = new REST({ version: '10' }).setToken(this.AppToken);
-        
-
-        try {
-            Logger.debug('Started reloading slash commands.');
-    
-            await rest.put(
-                Routes.applicationGuildCommands(this.ClientId, this.GuildId),
-                { body: commands },
-            );
-    
-            Logger.info('✅ Reloaded slash commands.');
-        } catch (error) {
-            Logger.error(error);
-        }
-    }
 }
 
 

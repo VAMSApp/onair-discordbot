@@ -4,7 +4,28 @@ const { GatewayIntentBits } = require("discord.js");
 /* config */
 const config = {
   logLevel: 'debug', // logging level one of; debug, info, warn, error
-
+  OnConnectNotice: true, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
+  OnConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
+  onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
+  discord_token: '##_ADD_DISCORD_TOKEN_HERE_##', // obtain from https://discord.com/developers/applications
+  discord_clientId: '##_ADD_DISCORD_CLIENT_ID_HERE_##', // obtain from https://discord.com/developers/applications
+  discord_guildId: '##_ADD_DISCORD_GUILD_ID_HERE_##', // obtain from https://discord.com/developers/applications
+  discord_channelId: '##_ADD_DISCORD_CHANNEL_ID_HERE_##', // obtain from right clicking on a channel in Discord and selecting 'Copy ID'
+  deployCommands: true, // if set to true, bot will auto deploy slash commands at startup to Discord
+  discord_admins: [
+    {
+      id: '##_ADD_DISCORD_USER_ID_HERE_##',
+      name: '##_ADD_DISCORD_USERNAME_HERE_##',
+    },
+  ],
+  intents: [
+    GatewayIntentBits.Guilds,
+  ],
+  onAir: {
+    companyId: '##_ADD_ONAIR_COMPANY_ID_HERE_##',
+    vAId: '##_ADD_ONAIR_VA_ID_HERE_##',
+    apiKey: '##_ADD_ONAIR_API_KEY_HERE_##',
+  },
   // VAEvents is not fully functioning and has reliability issues, enable at your own risk
   VAEvents: {
     enabled: false, // if set to true, bot will subscribe to VA Events
@@ -35,23 +56,8 @@ const config = {
     },
     refreshOnStartup: false, // if set to true, bot will run all enabled refresh tasks on startup
   },
-  OnConnectNotice: true, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
-  OnConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
-  onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
-  discord_token: '##_ADD_DISCORD_TOKEN_HERE_##', // obtain from https://discord.com/developers/applications
-  discord_clientId: '##_ADD_DISCORD_CLIENT_ID_HERE_##', // obtain from https://discord.com/developers/applications
-  discord_guildId: '##_ADD_DISCORD_GUILD_ID_HERE_##', // obtain from https://discord.com/developers/applications
-  deployCommands: true, // if set to true, bot will auto deploy slash commands at startup to Discord
-  intents: [
-    GatewayIntentBits.Guilds,
-  ],
   // VAEvents uses Redis to store messages, if you're not using VAEvents and don't have Redis installed, leave this set to false
   redis: false,
-  onAir: {
-    companyId: '##_ADD_ONAIR_COMPANY_ID_HERE_##',
-    vAId: '##_ADD_ONAIR_VA_ID_HERE_##',
-    apiKey: '##_ADD_ONAIR_API_KEY_HERE_##',
-  }
 };
 
 module.exports = config;
