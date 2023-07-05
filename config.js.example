@@ -1,8 +1,11 @@
 const { GatewayIntentBits } = require("discord.js");
 
+
 /* config */
 const config = {
   logLevel: 'debug', // logging level one of; debug, info, warn, error
+
+  // VAEvents is not fully functioning and has reliability issues, enable at your own risk
   VAEvents: {
     enabled: false, // if set to true, bot will subscribe to VA Events
     channels: {
@@ -32,23 +35,18 @@ const config = {
     },
     refreshOnStartup: false, // if set to true, bot will run all enabled refresh tasks on startup
   },
-  OnConnectNotice: false, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
+  OnConnectNotice: true, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
   OnConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
   onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
-  discordBotEnabled: false, // if set to true, bot will connect to Discord
-  discord_token: '##_ADD_DISCORD_TOKEN_HERE_##',
-  discord_clientId: '##_ADD_DISCORD_CLIENT_ID_HERE_##',
-  discord_guildId: '##_ADD_DISCORD_GUILD_ID_HERE_##',
+  discord_token: '##_ADD_DISCORD_TOKEN_HERE_##', // obtain from https://discord.com/developers/applications
+  discord_clientId: '##_ADD_DISCORD_CLIENT_ID_HERE_##', // obtain from https://discord.com/developers/applications
+  discord_guildId: '##_ADD_DISCORD_GUILD_ID_HERE_##', // obtain from https://discord.com/developers/applications
   deployCommands: true, // if set to true, bot will auto deploy slash commands at startup to Discord
   intents: [
     GatewayIntentBits.Guilds,
   ],
-  redis: {
-    host: 'localhost',
-    port: 6379,
-    db: "0",
-    password: "##_ADD_REDIS_PASSWORD_HERE_##",
-  },
+  // VAEvents uses Redis to store messages, if you're not using VAEvents and don't have Redis installed, leave this set to false
+  redis: false,
   onAir: {
     companyId: '##_ADD_ONAIR_COMPANY_ID_HERE_##',
     vAId: '##_ADD_ONAIR_VA_ID_HERE_##',
